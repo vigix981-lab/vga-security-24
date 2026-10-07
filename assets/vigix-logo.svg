@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 210" role="img" aria-labelledby="t">
+<title id="t">Vigix</title>
+<defs>
+  <linearGradient id="red" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#ff2635"/>
+    <stop offset="1" stop-color="#c81028"/>
+  </linearGradient>
+  <linearGradient id="steel" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#454b54"/>
+    <stop offset="1" stop-color="#171b21"/>
+  </linearGradient>
+</defs>
+<g transform="translate(18 18)">
+  <path d="M82 2 150 23v55c0 52-27 88-68 112C41 166 14 130 14 78V23Z" fill="url(#steel)"/>
+  <path d="M82 2 14 23v55c0 52 27 88 68 112v-57L49 101l20-20 18 18 48-53 22 19-75 82Z" fill="url(#red)"/>
+  <path d="m54 96 28 29 55-61" fill="none" stroke="#ff1f31" stroke-width="18" stroke-linecap="square" stroke-linejoin="miter"/>
+</g>
+<text x="196" y="142" fill="#ffffff" font-family="Arial,Helvetica,sans-serif" font-size="124" font-style="italic" font-weight="800" letter-spacing="-6">Vigix</text>
+<path d="M654 57h43l-21 27z" fill="#ff2032"/>
+</svg>
