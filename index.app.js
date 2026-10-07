@@ -1,4 +1,4 @@
-    const URL_FIREBASE = "https://mercosur-seguridad-default-rtdb.firebaseio.com";
+    const URL_FIREBASE = "https://vga-security-24-default-rtdb.firebaseio.com";
     // Endpoint del Cloudflare Worker (fichaje AUTORITATIVO con service account).
     // Las Reglas endurecidas (SA-ONLY) impiden que el vigilador cree /fichadas por
     // REST; la fichada se envia al Worker (accion 'fichar'), que revalida objetivo

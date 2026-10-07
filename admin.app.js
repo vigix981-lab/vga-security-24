@@ -1,4 +1,4 @@
-const URL_FIREBASE = "https://mercosur-seguridad-default-rtdb.firebaseio.com";
+const URL_FIREBASE = "https://vga-security-24-default-rtdb.firebaseio.com";
 // URL del Worker que sincroniza la clave de Firebase Auth al cambiar el PIN.
 // Pegá acá la URL que te da Cloudflare (ej: https://vigix-auth-admin.TU-SUBDOMINIO.workers.dev).
 // Si queda vacía, el cambio de PIN NO actualiza la clave de acceso (solo el hash local).

@@ -8,7 +8,7 @@
 (function () {
   'use strict';
 
-  var URL_FIREBASE = 'https://mercosur-seguridad-default-rtdb.firebaseio.com';
+  var URL_FIREBASE = 'https://vga-security-24-default-rtdb.firebaseio.com';
 
   // Prefijo del payload del QR: VIGIX1|idObjetivo|idPunto|token
   var PREFIJO_QR = 'VIGIX1';

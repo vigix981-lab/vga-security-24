@@ -1,4 +1,4 @@
-const URL_FIREBASE = "https://mercosur-seguridad-default-rtdb.firebaseio.com";
+const URL_FIREBASE = "https://vga-security-24-default-rtdb.firebaseio.com";
 let temporizadorInactividad;
 let datosVigiladorGlobal = [];
 let mapaConfiguracionPersonalVigilador = {};

@@ -17,7 +17,7 @@
 (function () {
   'use strict';
 
-  var URL_BASE = 'https://mercosur-seguridad-default-rtdb.firebaseio.com';
+  var URL_BASE = 'https://vga-security-24-default-rtdb.firebaseio.com';
 
   // Getters de token que exponen los distintos módulos de cada página.
   var GETTERS = [

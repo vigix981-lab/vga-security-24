@@ -153,7 +153,7 @@ function cerrarSesion() {
 // ==========================================
 // LÓGICA DE DATOS Y DASHBOARD (FIREBASE: DEMO ASISTENCIA)
 // ==========================================
-const URL_BASE_FIREBASE = "https://mercosur-seguridad-default-rtdb.firebaseio.com";
+const URL_BASE_FIREBASE = "https://vga-security-24-default-rtdb.firebaseio.com";
 const URL_FIREBASE = `${URL_BASE_FIREBASE}/fichadas.json`;
 
 // ─────────────────────────────────────────────────────────────────────────────

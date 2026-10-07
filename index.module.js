@@ -2,13 +2,13 @@
     import { getAuth, signInWithCustomToken, signOut, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyBu4IS3qftwYLwsGkeiu2ht5FyZgCChlBY",
-      authDomain: "mercosur-seguridad.firebaseapp.com",
-      databaseURL: "https://mercosur-seguridad-default-rtdb.firebaseio.com",
-      projectId: "mercosur-seguridad",
-      storageBucket: "mercosur-seguridad.firebasestorage.app",
-      messagingSenderId: "197382650125",
-      appId: "1:197382650125:web:edc6cf98d1c236b0f0d844"
+      apiKey: "AIzaSyAsJoHn9mH6-klN_4yN1lBrnw0bHTzEhTU",
+      authDomain: "vga-security-24.firebaseapp.com",
+      databaseURL: "https://vga-security-24-default-rtdb.firebaseio.com",
+      projectId: "vga-security-24",
+      storageBucket: "vga-security-24.firebasestorage.app",
+      messagingSenderId: "972832448326",
+      appId: "1:972832448326:web:60415215815b95142c4f47"
     };
 
     // Instancia dedicada para NO interferir con ninguna otra sesión de la app.
