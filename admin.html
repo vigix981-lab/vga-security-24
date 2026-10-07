@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Blindaje CSP: solo se permiten los orígenes que la app realmente usa. -->
+  <!-- Preconectar a los orígenes CDN acelera la resolución DNS + TLS -->
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+  <link rel="preconnect" href="https://unpkg.com" />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdnjs.cloudflare.com https://unpkg.com https://www.gstatic.com; style-src 'self' https://cdnjs.cloudflare.com https://unpkg.com; font-src 'self' data: https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.googleapis.com https://www.gstatic.com https://nominatim.openstreetmap.org https://vga-security-24.micasa27822024.workers.dev; worker-src 'self' blob:; manifest-src 'self'">
+  <title>vga security 24 - Control operativo y asistencia - Panel de Control</title>
+  <!-- [CSP] Tailwind servido estático desde el mismo origen (admin.css) en vez del CDN Play (JIT exige 'unsafe-eval'/'unsafe-inline') -->
+  <link rel="stylesheet" href="admin.css?v=20261004b" />
+  <!-- Cargador bajo demanda: las librerías pesadas se cargan solo cuando se usan -->
+  <script fetchpriority="low" src="lazy-cdn.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <!-- MAPA: CSS de Leaflet (el JS se carga bajo demanda con lazy-cdn.js) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOseddDm0cxnGQzxIR7vJgsLZbdLE3w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- ========================================================================= -->
+  <!--  SEGURIDAD DE PIN - hash con salt (Web Crypto / PBKDF2-SHA256)             -->
+  <!--  El PIN NO se guarda en texto plano en /personal: se guarda pinHash+pinSalt.-->
+  <!--  Bloque compartido y aditivo; no altera ninguna lógica existente.          -->
+  <!-- ========================================================================= -->
+  <script src="admin.head.js"></script>
+
+  <!-- ENCABEZADO Y MENÚ CORPORATIVO -->
+  <header class="bg-slate-900 border-b border-slate-800 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
+      
+     <div class="flex items-center space-x-3">
+       <div class="w-10 h-10 bg-slate-800 border border-emerald-500/30 rounded-xl flex items-center justify-center overflow-hidden shadow-inner p-1">
+       </div>
+       <div>
+         <span class="text-[10px] font-extrabold tracking-widest text-emerald-400 uppercase block">vga security 24 - Control operativo y asistencia</span>
+         <h1 class="text-lg font-bold text-white tracking-wide">Portal de Operaciones</h1>
+         <span id="badgePlanApp" class="hidden mt-1 inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Plan</span>
+       </div>
+     </div>
+
+      <nav class="flex flex-wrap justify-center items-center gap-1 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700/60">
+                <a href="index.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-house text-emerald-400"></i>
+          <span>Inicio</span>
+        </a>
+<a href="fichadas.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-camera-retro text-emerald-400"></i>
+          <span>Fichadas</span>
+        </a>
+        <a href="rondas.html" data-plan-funcion="rondas" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-route text-emerald-400"></i>
+          <span>Rondas</span>
+        </a>
+        <a href="admin.html" class="px-3 py-1.5 text-xs font-medium text-white bg-slate-700 rounded-lg transition flex items-center space-x-1.5 shadow-sm">
+          <i class="fa-solid fa-building-shield text-emerald-400"></i>
+          <span>Centro de Operaciones</span>
+        </a>
+        <a href="panel.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-chart-line text-emerald-400"></i>
+          <span>Control en Tiempo Real</span>
+        </a>
+        <a href="mis-horas.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-clock text-emerald-400"></i>
+          <span>Control de Mis Horas</span>
+        </a>
+      </nav>
+
+    </div>
+  </header>
+
+  <!-- MODAL DE ACCESO ADMIN -->
+  <div id="pantallaLoginAdmin" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700 p-6 md:p-8 rounded-2xl max-w-md w-full shadow-2xl text-center space-y-6">
+      <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mx-auto text-2xl">
+        <i class="fa-solid fa-user-gear"></i>
+      </div>
+      <div>
+        <h2 class="text-xl font-bold text-white">Acceso Administrador</h2>
+        <p class="text-xs text-slate-400 mt-1">Ingresa tu correo y contraseña para acceder al panel admin</p>
+      </div>
+      <form id="formValidarPass" class="space-y-4">
+        <div class="relative">
+          <i class="fa-solid fa-envelope absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+          <input type="text" inputmode="text" autocapitalize="none" autocorrect="off" spellcheck="false" id="inputEmailAdmin" placeholder="Legajo o correo (ej: 120000 o admin@vigix.com)" required autocomplete="username" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-slate-100 focus:outline-none focus:border-amber-500 text-center text-sm">
+        </div>
+        <div class="relative">
+          <i class="fa-solid fa-lock absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+          <input type="password" id="inputPassAdmin" placeholder="Contraseña de acceso" required autocomplete="current-password" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-slate-100 focus:outline-none focus:border-amber-500 text-center tracking-widest text-lg">
+        </div>
+        <p id="msgErrorPassAdmin" class="text-xs text-rose-400 hidden flex items-center justify-center gap-1">
+          <i class="fa-solid fa-circle-exclamation"></i> Contraseña incorrecta. Intenta nuevamente.
+        </p>
+        <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2">
+          <i class="fa-solid fa-key"></i> Ingresar como Admin
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <div id="contenidoAdmin" class="max-w-7xl mx-auto space-y-6 p-4 md:p-8 flex-grow hidden w-full">
+    
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+      <div>
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-emerald-500"></i> Panel de Control Operativo
+        </h2>
+        <p class="text-xs text-slate-400 mt-1">Gestión de asistencia, auditoría de IA en segundo plano y puestos</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="btnRecargar" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg">
+          <i class="fa-solid fa-rotate-right" id="icono-reload"></i> Actualizar Datos
+        </button>
+        <button id="btnAlertasFichadas" class="relative bg-rose-600/15 hover:bg-rose-600/30 text-rose-300 font-bold px-3 py-2 rounded-xl text-sm transition border border-rose-500/30" title="Alertas de fichadas bloqueadas">
+          <i class="fa-solid fa-bell"></i>
+          <span id="badgeAlertasFichadas" class="hidden absolute -top-2 -right-2 min-w-[20px] h-5 px-1.5 rounded-full bg-rose-600 text-white text-[10px] font-black items-center justify-center border-2 border-slate-900">0</span>
+        </button>
+        <button id="btnCerrarSesion" class="bg-slate-700 hover:bg-rose-600 text-slate-300 hover:text-white font-semibold px-3 py-2 rounded-xl text-sm transition border border-slate-600" title="Cerrar Sesión">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- PESTAÑAS -->
+    <div class="flex flex-wrap border-b border-slate-700 gap-2">
+      <button id="tabBtnMarcaciones" class="px-5 py-3 font-semibold text-sm border-b-2 border-emerald-500 text-emerald-400 flex items-center gap-2 transition">
+        <i class="fa-solid fa-clipboard-user"></i> Marcaciones
+      </button>
+      <button id="tabBtnAlertasUbicacion" data-plan-funcion="alertasIncidencias" class="relative px-5 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
+        <i class="fa-solid fa-location-crosshairs text-rose-400"></i> Alertas de ubicación
+        <span id="badgeAlertasTab" class="hidden min-w-[18px] h-5 px-1.5 rounded-full bg-rose-600 text-white text-[10px] font-black items-center justify-center">0</span>
+      </button>
+      <button id="tabBtnNovedades" data-plan-funcion="alertasIncidencias" class="px-5 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
+        <i class="fa-solid fa-triangle-exclamation"></i> Novedades / Incidencias
+      </button>
+      <button id="tabBtnPanicos" class="px-5 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
+        <i class="fa-solid fa-bell text-rose-400"></i> Pánicos
+      </button>
+      <button id="tabBtnPersonal" class="px-5 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
+        <i class="fa-solid fa-id-card"></i> Personal / PINs
+      </button>
+      <button id="tabBtnObjetivos" class="px-5 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
+        <i class="fa-solid fa-building"></i> Objetivos / Puestos
+      </button>
+      <button id="tabBtnRondasReporte" data-plan-funcion="rondas" class="px-5 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
+        <i class="fa-solid fa-route text-emerald-400"></i> Rondas
+      </button>
+      <button id="tabBtnDispositivos" data-plan-funcion="modoOffline" class="px-5 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
+        <i class="fa-solid fa-mobile-screen"></i> Dispositivos
+      </button>
+      <button id="tabBtnConfiguracion" class="px-5 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
+        <i class="fa-solid fa-sliders"></i> Configurar
+      </button>
+    </div>
+
+    <!-- TAB 1: MARCACIONES -->
+    <div id="tabMarcaciones" class="space-y-4">
+      <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex flex-col md:flex-row gap-4 justify-between items-center">
+        <div class="flex-1 relative w-full">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
+          <input type="text" id="inputBusqueda" placeholder="Buscar por Nombre, Legajo u Objetivo..." class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+        </div>
+        
+        <div class="flex flex-wrap md:flex-nowrap items-center gap-3 w-full md:w-auto">
+          <!-- Filtro de Alertas IA -->
+          <select id="filtroAuditoria" class="w-full md:w-auto bg-slate-900 border border-slate-700 text-amber-400 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-amber-500">
+            <option value="TODOS">Todas las auditorías</option>
+            <option value="FRAUDE">🚨 Solo Fraude / Sospechosos</option>
+            <option value="PENDIENTE">🕒 Pendientes de verificación (offline)</option>
+            <option value="OK">✅ Solo Verificados</option>
+          </select>
+
+          <select id="filtroTipo" class="w-full md:w-auto bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+            <option value="TODOS">Todos los tipos</option>
+            <option value="ENTRADA">Solo Entradas</option>
+            <option value="SALIDA">Solo Salidas</option>
+          </select>
+
+          <button id="btnExcelMarc" data-plan-funcion="exportarReportes" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-md w-full md:w-auto">
+            <i class="fa-solid fa-file-excel"></i> Excel
+          </button>
+          <button id="btnPDFMarc" data-plan-funcion="exportarReportes" class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-md w-full md:w-auto">
+            <i class="fa-solid fa-file-pdf"></i> PDF
+          </button>
+          <input type="month" id="mesReporteCumpl" data-plan-funcion="exportarReportes" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 w-full md:w-auto" title="Mes del reporte mensual de cumplimiento">
+          <button id="btnPDFCumpl" data-plan-funcion="exportarReportes" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-md w-full md:w-auto">
+            <i class="fa-solid fa-calendar-check"></i> PDF Cumplimiento
+          </button>
+        </div>
+      </div>
+
+      <!-- RESUMEN DE CUMPLIMIENTO PARA EL SUPERVISOR (aditivo) -->
+      <div id="resumenCumplimiento" class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="bg-slate-800 border border-emerald-500/25 rounded-2xl p-3 flex flex-col">
+          <span class="text-[11px] uppercase tracking-wide text-slate-400">A tiempo</span>
+          <span id="resCumplATiempo" class="text-2xl font-extrabold text-emerald-400">0</span>
+        </div>
+        <div class="bg-slate-800 border border-amber-500/40 rounded-2xl p-3 flex flex-col">
+          <span class="text-[11px] uppercase tracking-wide text-slate-400">Con tolerancia</span>
+          <span id="resCumplTolerancia" class="text-2xl font-extrabold text-amber-300">0</span>
+        </div>
+        <div class="bg-slate-800 border border-rose-500/40 rounded-2xl p-3 flex flex-col">
+          <span class="text-[11px] uppercase tracking-wide text-slate-400">Llegadas tarde</span>
+          <span id="resCumplTarde" class="text-2xl font-extrabold text-rose-300">0</span>
+        </div>
+        <div class="bg-slate-800 border border-rose-500/40 rounded-2xl p-3 flex flex-col">
+          <span class="text-[11px] uppercase tracking-wide text-slate-400">Salidas anticipadas</span>
+          <span id="resCumplAnticipada" class="text-2xl font-extrabold text-rose-300">0</span>
+        </div>
+        <div class="bg-slate-800 border border-sky-500/40 rounded-2xl p-3 flex flex-col">
+          <span class="text-[11px] uppercase tracking-wide text-slate-400">Con horas extra</span>
+          <span id="resCumplExtra" class="text-2xl font-extrabold text-sky-300">0</span>
+        </div>
+      </div>
+
+      <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-300">
+            <thead class="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-700">
+              <tr>
+                <th class="p-4">Fecha y Hora</th>
+                <th class="p-4">Legajo</th>
+                <th class="p-4">Nombre</th>
+                <th class="p-4">Objetivo</th>
+                <th class="p-4 text-center">Tipo</th>
+                <th class="p-4 text-center">Cumplimiento</th>
+                <th class="p-4 text-center">Auditoría IA (2do Plano)</th>
+                <th class="p-4 text-center">Ubicación</th>
+                <th class="p-4 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="cuerpoTablaMarcaciones" class="divide-y divide-slate-700/50">
+              <tr>
+                <td colspan="9" class="p-8 text-center text-slate-400">
+                  <i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-500 mb-2"></i>
+                  <p>Cargando información...</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- CONTROLES DE PAGINACIÓN (aditivo) -->
+        <div id="paginacionMarcaciones" class="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t border-slate-700 bg-slate-950/40">
+          <div class="flex items-center gap-2 text-xs text-slate-400">
+            <span>Filas por página</span>
+            <select id="selectFilasPorPagina" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-white focus:outline-none focus:border-emerald-500">
+              <option value="10">10</option>
+              <option value="25" selected>25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+            <span id="infoRangoMarcaciones" class="ml-2"></span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btnPagAnt" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700 transition"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+            <span id="infoPaginaMarcaciones" class="text-xs text-slate-300 font-semibold px-2">1 / 1</span>
+            <button id="btnPagSig" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700 transition">Siguiente <i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: NOVEDADES -->
+    <div id="tabNovedades" class="hidden space-y-4">
+      <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex flex-col md:flex-row gap-4 justify-between items-center">
+        <div class="flex-1 relative w-full">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
+          <input type="text" id="inputBusquedaNovedades" placeholder="Buscar por Novedad, Objetivo o Personal..." class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+        </div>
+        <div class="flex flex-wrap md:flex-nowrap items-center gap-3 w-full md:w-auto">
+          <button id="btnExcelNov" data-plan-funcion="exportarReportes" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-md w-full md:w-auto">
+            <i class="fa-solid fa-file-excel"></i> Excel
+          </button>
+          <button id="btnPDFNov" data-plan-funcion="exportarReportes" class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-md w-full md:w-auto">
+            <i class="fa-solid fa-file-pdf"></i> PDF
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-300">
+            <thead class="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-700">
+              <tr>
+                <th class="p-4">Fecha y Hora</th>
+                <th class="p-4">Legajo / Nombre</th>
+                <th class="p-4">Objetivo</th>
+                <th class="p-4">Tipo Incidencia</th>
+                <th class="p-4">Descripción</th>
+                <th class="p-4 text-center">Ubicación</th>
+                <th class="p-4 text-center">Foto</th>
+              </tr>
+            </thead>
+            <tbody id="cuerpoTablaNovedades" class="divide-y divide-slate-700/50">
+              <tr><td colspan="7" class="p-8 text-center text-slate-400">Cargando novedades...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB NUEVA: PÁNICOS -->
+    <div id="tabPanicos" class="hidden space-y-4">
+      <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex justify-between items-center">
+        <div>
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation text-rose-500"></i> Historial de Alertas de Pánico
+          </h3>
+          <p class="text-xs text-slate-400 mt-1">Registro de todas las alertas emitidas por el personal operativo</p>
+        </div>
+      </div>
+
+      <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-300">
+            <thead class="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-700">
+              <tr>
+                <th class="p-4">Fecha y Hora</th>
+                <th class="p-4">Legajo</th>
+                <th class="p-4">Nombre</th>
+                <th class="p-4">Objetivo</th>
+                <th class="p-4 text-center">Estado</th>
+                <th class="p-4 text-center">Ubicación GPS</th>
+                <th class="p-4 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="cuerpoTablaPanicos" class="divide-y divide-slate-700/50">
+              <tr><td colspan="7" class="p-8 text-center text-slate-400">Cargando registros de pánico...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: HISTORIAL DE ALERTAS DE UBICACIÓN -->
+    <div id="tabAlertasUbicacion" class="hidden space-y-4">
+      <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-location-crosshairs text-rose-400"></i> Historial de fichadas bloqueadas
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Acá quedan guardados los intentos realizados fuera del radio permitido, incluso después de cerrar la notificación.</p>
+          </div>
+          <div class="flex gap-2">
+            <button id="btnCargarAlertas" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2 rounded-lg text-xs font-semibold transition">
+              <i class="fa-solid fa-rotate"></i> Actualizar
+            </button>
+            <button id="btnMarcarVistas" class="bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 px-3 py-2 rounded-lg text-xs font-semibold transition">
+              <i class="fa-solid fa-check-double"></i> Marcar vistas
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl p-4">
+        <div id="listaAlertasFichadasHistorial" class="space-y-2"></div>
+      </div>
+    </div>
+
+    <!-- TAB 3: PERSONAL -->
+    <div id="tabPersonal" class="hidden space-y-6">
+      <!-- ALTA DE EMPLEADO CON ACCESO -->
+      <div class="bg-slate-800 p-6 rounded-2xl border border-emerald-600/40 shadow-xl space-y-4">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-user-shield text-emerald-400"></i> Agregar Empleado con Acceso
+          <span id="cupoVigiladoresTxt" class="hidden ml-auto text-xs font-bold px-2.5 py-1 rounded-full bg-slate-900 text-emerald-300 border border-slate-700" title="Vigiladores usados / tope de tu plan">0 / 0</span>
+        </h3>
+        <p class="text-xs text-slate-400">Registrá un nuevo empleado y su credencial de acceso. El horario y los objetivos se configuran luego desde <strong class="text-slate-200">Configurar</strong>.</p>
+        <form id="formAltaEmpleado" class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+          <div>
+            <label class="block text-xs uppercase text-slate-400 mb-1">N° Legajo</label>
+            <input type="text" id="altaLegajo" required placeholder="Ej: 0297" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-xs uppercase text-slate-400 mb-1">Rol / Permiso</label>
+            <select id="altaRol" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+              <option value="empleado" selected>Empleado (vigilador)</option>
+              <option value="supervisor">Supervisor</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs uppercase text-slate-400 mb-1">Nombre Completo</label>
+            <input type="text" id="altaNombre" required placeholder="Ej: Juan Pérez" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-xs uppercase text-slate-400 mb-1">PIN Generado</label>
+            <div class="flex gap-2">
+              <input type="text" id="altaPin" readonly required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-sm text-emerald-400 font-mono font-bold tracking-widest text-center cursor-not-allowed">
+              <button id="btnGenPin" type="button" class="bg-slate-700 hover:bg-slate-600 text-slate-200 p-2 rounded-xl text-sm transition" title="Generar nuevo PIN">
+                <i class="fa-solid fa-arrows-rotate"></i>
+              </button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs uppercase text-slate-400 mb-1">Foto Máster (IA)</label>
+            <input type="file" id="altaFotoMaster" accept="image/*" class="w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-700 file:text-emerald-400 hover:file:bg-slate-600 cursor-pointer">
+          </div>
+          <button type="submit" id="btnAltaEmpleado" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-user-shield"></i> Crear empleado
+          </button>
+        </form>
+      </div>
+
+      <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-300">
+            <thead class="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-700">
+              <tr>
+                <th class="p-4">Legajo</th>
+                <th class="p-4">Nombre Oficial</th>
+                <th class="p-4 text-center">PIN</th>
+                <th class="p-4 text-center">Foto Máster</th>
+                <th class="p-4 text-center">Estado</th>
+                <th class="p-4 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="cuerpoTablaPersonal" class="divide-y divide-slate-700/50">
+              <tr><td colspan="6" class="p-8 text-center text-slate-400">Cargando personal...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SECCION APARTE: SUPERVISORES Y ADMINISTRADORES (aditivo) -->
+      <!-- Los usuarios con rol supervisor/admin NO son vigiladores: se listan
+           separados de la tabla de personal para que no se mezclen. -->
+      <div class="bg-slate-800 rounded-2xl border border-indigo-500/30 overflow-hidden shadow-xl">
+        <div class="px-4 py-3 border-b border-slate-700 flex items-center gap-2">
+          <i class="fa-solid fa-user-shield text-indigo-400"></i>
+          <h3 class="text-sm font-bold text-white">Supervisores y Administradores</h3>
+          <span class="text-[11px] text-slate-400">Acceso al panel &mdash; no fichan como vigiladores</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-300">
+            <thead class="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-700">
+              <tr>
+                <th class="p-4">Legajo</th>
+                <th class="p-4">Nombre / Rol</th>
+                <th class="p-4 text-center">PIN</th>
+                <th class="p-4 text-center">Foto M&aacute;ster</th>
+                <th class="p-4 text-center">Estado</th>
+                <th class="p-4 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="cuerpoTablaRoles" class="divide-y divide-slate-700/50">
+              <tr><td colspan="6" class="p-8 text-center text-slate-400">Cargando&hellip;</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: OBJETIVOS -->
+    <div id="tabObjetivos" class="hidden space-y-6">
+      <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+        <div>
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-building-circle-check text-sky-500"></i> Registrar Nuevo Objetivo / Puesto
+            <span id="cupoObjetivosTxt" class="hidden ml-auto text-xs font-bold px-2.5 py-1 rounded-full bg-slate-900 text-sky-300 border border-slate-700" title="Objetivos usados / tope de tu plan">0 / 0</span>
+          </h3>
+          <p class="text-xs text-slate-400 mt-1">Escribí la dirección exacta. Podés buscarla en OpenStreetMap o abrirla directamente en Google Maps. Si Google Maps encuentra el domicilio, copiá sus coordenadas y pegálas abajo; también podés mover el marcador del mapa o cargar las coordenadas manualmente.</p>
+        </div>
+
+        <form id="formGuardarObj" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div>
+              <label class="block text-xs uppercase text-slate-400 mb-1">Nombre del Objetivo</label>
+              <input type="text" id="newObjetivo" required placeholder="Ej: Edificio Central" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500">
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs uppercase text-slate-400 mb-1">Dirección exacta</label>
+              <div class="flex flex-col sm:flex-row gap-2">
+                <input type="text" id="newDireccionObjetivo" required placeholder="Ej: Americo Vespucio 651, Bella Vista, San Miguel, Buenos Aires" class="flex-1 w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500">
+                <button type="button" id="btnBuscarDireccionNuevo" class="bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 whitespace-nowrap">
+                  <i class="fa-solid fa-magnifying-glass"></i> Buscar dirección
+                </button>
+                <button id="btnbuscarDirGogObj_nuevo" type="button" class="bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 whitespace-nowrap">
+                  <i class="fa-brands fa-google"></i> Google Maps
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="resultadoDireccionNuevo" class="hidden"></div>
+          <div id="mapaObjetivoNuevo" class="hidden rounded-2xl overflow-hidden border border-slate-700 shadow-inner h-72"></div>
+
+          <div class="text-xs text-slate-400 bg-slate-950/50 border border-slate-700 rounded-xl p-3">
+            <i class="fa-brands fa-google text-red-400 mr-1"></i>
+            <strong class="text-slate-200">Si necesitás precisión de domicilio:</strong>
+            abrí Google Maps, ubicá el punto exacto, copiá las coordenadas y pegálas en los campos de abajo.
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div>
+              <label class="block text-xs uppercase text-slate-400 mb-1">Latitud</label>
+              <input type="text" id="newLatitudObjetivo" inputmode="decimal" placeholder="Ej: -34.545123" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-emerald-300 font-mono focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs uppercase text-slate-400 mb-1">Longitud</label>
+              <input type="text" id="newLongitudObjetivo" inputmode="decimal" placeholder="Ej: -58.712345" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-emerald-300 font-mono focus:outline-none">
+            </div>
+            <div class="flex flex-col gap-2">
+              <button id="btnaplicarCoordObj_nuevo" type="button" class="bg-sky-700 hover:bg-sky-600 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-map-pin"></i> Aplicar coordenadas manuales
+              </button>
+              <button type="button" id="btnGPSNuevo" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-location-crosshairs"></i> Usar GPS actual
+              </button>
+            </div>
+          </div>
+
+          <div id="infoUbicacionNuevo" class="hidden bg-sky-500/10 border border-sky-500/20 rounded-xl p-3 text-xs text-sky-200"></div>
+
+          <button type="submit" id="btnGuardarObj" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-plus"></i> Añadir Objetivo
+          </button>
+        </form>
+      </div>
+
+      <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-300">
+            <thead class="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-700">
+              <tr>
+                <th class="p-4">ID</th>
+                <th class="p-4">Nombre del Objetivo</th>
+                <th class="p-4">Dirección</th>
+                <th class="p-4">Coordenadas</th>
+                <th class="p-4 text-center">Estado</th>
+                <th class="p-4 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="cuerpoTablaObjetivos" class="divide-y divide-slate-700/50">
+              <tr><td colspan="6" class="p-8 text-center text-slate-400">Cargando objetivos...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ TAB RONDAS (Paso 3: reporte de rondas con QR) ============ -->
+    <!--  Aditivo y SOLO LECTURA: muestra lo que el vigilador escanea (nodo
+          rondasRegistros). Admin y supervisor pueden leerlo (ver
+          database.rules.json). No toca ninguna otra pestana ni la logica previa. -->
+    <div id="tabRondasReporte" class="hidden space-y-4">
+
+      <!-- Encabezado -->
+      <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-emerald-500/20 border border-emerald-500/40 rounded-xl flex items-center justify-center text-emerald-400">
+            <i class="fa-solid fa-route"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="font-bold text-white text-base">Rondas registradas</h3>
+            <p class="text-xs text-slate-400">Puntos de control que los vigiladores escanearon durante sus recorridos.</p>
+          </div>
+          <button type="button" id="btnActualizarReporteRondas" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-4 py-2 rounded-xl text-sm transition inline-flex items-center gap-2">
+            <i class="fa-solid fa-rotate"></i> Actualizar
+          </button>
+        </div>
+      </div>
+
+      <!-- Resumen -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4">
+          <p class="text-xs uppercase text-slate-400 font-semibold">Pasos registrados</p>
+          <p class="text-2xl font-black text-white mt-1" id="resumenRondasTotal">0</p>
+        </div>
+        <div class="bg-slate-800 border border-amber-500/30 rounded-2xl p-4">
+          <p class="text-xs uppercase text-amber-400 font-semibold">Fuera del radio</p>
+          <p class="text-2xl font-black text-amber-400 mt-1" id="resumenRondasFuera">0</p>
+        </div>
+        <div class="bg-slate-800 border border-slate-600/40 rounded-2xl p-4">
+          <p class="text-xs uppercase text-slate-400 font-semibold">Sin ubicación GPS</p>
+          <p class="text-2xl font-black text-slate-300 mt-1" id="resumenRondasSinGps">0</p>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+        <div>
+          <label class="block text-xs uppercase text-slate-400 mb-1">Objetivo</label>
+          <select id="filtroObjetivoRonda" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+            <option value="">Todos los objetivos</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs uppercase text-slate-400 mb-1">Fecha</label>
+          <input type="date" id="filtroFechaRonda" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+        </div>
+        <div>
+          <label class="block text-xs uppercase text-slate-400 mb-1">Legajo vigilador</label>
+          <input type="text" id="filtroLegajoRonda" inputmode="numeric" placeholder="Ej: 0286" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+        </div>
+        <div>
+          <button type="button" id="btnLimpiarFiltrosRonda" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold px-3 py-2 rounded-xl text-sm transition">Limpiar filtros</button>
+        </div>
+      </div>
+
+      <p id="estadoReporteRondas" class="text-xs text-slate-400">Cargando registros de rondas…</p>
+
+      <!-- Tabla -->
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-950 text-slate-400 uppercase text-xs">
+              <tr>
+                <th class="p-3">Fecha / Hora</th>
+                <th class="p-3">Objetivo</th>
+                <th class="p-3">Punto</th>
+                <th class="p-3">Vigilador</th>
+                <th class="p-3">Ubicación</th>
+                <th class="p-3 text-center">Mapa</th>
+              </tr>
+            </thead>
+            <tbody id="cuerpoReporteRondas" class="divide-y divide-slate-700/50">
+              <tr><td colspan="6" class="p-8 text-center text-slate-400">Cargando rondas…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: CONFIGURAR (tolerancias y radio) -->
+    <!-- ============ TAB DISPOSITIVOS (Fase 3: fichaje offline opt-in) ============ -->
+    <div id="tabDispositivos" class="hidden space-y-6">
+
+      <!-- HABILITACION GLOBAL DEL MODO OFFLINE -->
+      <!-- [PLAN] data-plan-funcion="modoOffline": aplicarFuncionesUI() oculta esta
+           tarjeta si el plan no incluye el fichaje offline. -->
+      <div data-plan-funcion="modoOffline" class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl max-w-2xl">
+        <div class="flex items-center gap-3 mb-1">
+          <i class="fa-solid fa-cloud-arrow-up text-emerald-400 text-lg"></i>
+          <h3 class="font-bold text-white text-base">Fichaje sin conexión (offline)</h3>
+        </div>
+        <p class="text-xs text-slate-400 mb-5">Permite que los dispositivos registrados guarden fichadas cuando no hay señal y las sincronicen firmadas al recuperar internet. Está <b>desactivado por defecto</b>. Solo los dispositivos dados de alta abajo pueden fichar offline.</p>
+        <label class="flex items-start gap-3 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 cursor-pointer hover:border-emerald-500 transition">
+          <input type="checkbox" id="cfgOfflineHabilitado" class="mt-1 accent-emerald-500 w-4 h-4">
+          <span>
+            <span class="block text-sm font-semibold text-white">Habilitar fichaje offline en dispositivos registrados</span>
+            <span class="block text-[11px] text-slate-400 mt-0.5">Al desactivarlo, el servidor rechaza cualquier lote offline aunque el dispositivo esté activo. Todas las fichadas offline se revalidan server-side (objetivo, radio, GPS y firma HMAC del dispositivo).</span>
+          </span>
+        </label>
+        <div class="mt-4 max-w-xs">
+          <label class="block text-xs uppercase text-slate-400 mb-1">Ventana máx. del lote offline (horas)</label>
+          <input type="number" id="cfgVentanaLoteOffline" min="1" max="720" value="168" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+          <p class="text-[11px] text-slate-500 mt-1">Antigüedad máxima aceptada de un lote offline al sincronizar. Por defecto 168 h (7 días). Los lotes más viejos se rechazan.</p>
+        </div>
+        <div class="mt-4 max-w-xs">
+          <label class="block text-xs uppercase text-slate-400 mb-1">Tolerancia de reloj del dispositivo (seg)</label>
+          <input type="number" id="cfgSkewRelojOffline" min="0" max="3600" value="300" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+          <p class="text-[11px] text-slate-500 mt-1">Margen de adelanto del reloj del dispositivo que el servidor acepta al sincronizar un lote offline. Las marcas con hora futura más allá de este margen se rechazan. Por defecto 300 s (5 min). 0 = sin margen.</p>
+        </div>
+        <div class="flex items-center gap-3 mt-5">
+          <button type="button" id="btnGuardarOffline" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl text-sm transition flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i> Guardar
+          </button>
+          <span id="cfgEstadoOffline" class="text-xs"></span>
+        </div>
+      </div>
+
+      <!-- ALTA DE DISPOSITIVO -->
+      <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl max-w-2xl">
+        <div class="flex items-center gap-3 mb-1">
+          <i class="fa-solid fa-plus text-emerald-400 text-lg"></i>
+          <h3 class="font-bold text-white text-base">Dar de alta un dispositivo</h3>
+        </div>
+        <p class="text-xs text-slate-400 mb-5">El servidor genera un identificador y un secreto único. Copiá el <b>código de vinculación</b> en el dispositivo físico (pantalla de fichaje &gt; Vincular dispositivo). El secreto se muestra <b>una sola vez</b>.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs uppercase text-slate-400 mb-1">Nombre / ubicación</label>
+            <input type="text" id="nuevoDispositivoNombre" placeholder="Ej: Tablet Puesto Norte" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-xs uppercase text-slate-400 mb-1">Legajos permitidos (opcional)</label>
+            <input type="text" id="nuevoDispositivoLegajos" placeholder="Ej: 0297, 0312 (vacío = todos)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+            <p class="text-[11px] text-slate-500 mt-1">Separá los legajos con coma. Si lo dejás vacío, cualquier legajo válido puede fichar desde este dispositivo.</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 mt-5">
+          <button type="button" id="btnCrearDispositivo" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl text-sm transition flex items-center gap-2">
+            <i class="fa-solid fa-mobile-screen-button"></i> Crear dispositivo
+          </button>
+          <span id="estadoCrearDispositivo" class="text-xs"></span>
+        </div>
+        <!-- Cuadro con el codigo de vinculacion (se muestra una sola vez) -->
+        <div id="boxCodigoVinculacion" class="hidden mt-5 border border-emerald-600/40 bg-emerald-950/30 rounded-xl p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-key text-emerald-400"></i>
+            <span class="text-sm font-bold text-emerald-300">Código de vinculación (cópialo ahora)</span>
+          </div>
+          <p class="text-[11px] text-amber-300/90 mb-3"><i class="fa-solid fa-triangle-exclamation"></i> Este código contiene el secreto del dispositivo y <b>no se volverá a mostrar</b>. Pegalo en el dispositivo físico. Si lo perdés, rotá el secreto.</p>
+          <textarea id="codigoVinculacionTexto" readonly rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-emerald-200 break-all focus:outline-none"></textarea>
+          <div class="flex flex-wrap items-center gap-3 mt-3 text-[11px] text-slate-400">
+            <button id="btnCopiarVinc" type="button" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-1.5 px-3 rounded-lg transition flex items-center gap-1.5">
+              <i class="fa-solid fa-copy"></i> Copiar código
+            </button>
+            <span id="copiadoAviso"></span>
+          </div>
+          <div class="mt-3 text-[11px] text-slate-400 font-mono break-all">
+            <div><span class="text-slate-500">deviceId:</span> <span id="codigoDeviceId" class="text-slate-200"></span></div>
+            <div><span class="text-slate-500">secreto:</span> <span id="codigoSecreto" class="text-slate-200"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LISTADO DE DISPOSITIVOS -->
+      <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-list text-emerald-400 text-lg"></i>
+            <h3 class="font-bold text-white text-base">Dispositivos registrados</h3>
+          </div>
+          <button id="btnCargarDisp" type="button" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-1.5 px-3 rounded-lg text-xs transition flex items-center gap-1.5">
+            <i class="fa-solid fa-rotate"></i> Actualizar
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead class="text-xs uppercase text-slate-400 border-b border-slate-700">
+              <tr>
+                <th class="px-3 py-2">Nombre</th>
+                <th class="px-3 py-2">Estado</th>
+                <th class="px-3 py-2">Legajos</th>
+                <th class="px-3 py-2">Identificador</th>
+                <th class="px-3 py-2 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaDispositivos">
+              <tr><td colspan="5" class="px-3 py-6 text-center text-slate-500">Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="tabConfiguracion" class="hidden space-y-6">
+      <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl max-w-2xl">
+        <div class="flex items-center gap-3 mb-1">
+          <i class="fa-solid fa-sliders text-emerald-400 text-lg"></i>
+          <h3 class="font-bold text-white text-base">Reglas de tolerancia y radio de fichaje</h3>
+        </div>
+        <p class="text-xs text-slate-400 mb-5">Estos valores definen cómo se clasifican las fichadas (tolerancia, llegada tarde, salida anticipada y horas extra) y a qué distancia del objetivo puede fichar un empleado. Aplican como valor por defecto para todos los objetivos.</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs uppercase text-slate-400 mb-1">Tolerancia de ingreso (min)</label>
+            <input type="number" id="cfgToleranciaIngreso" min="0" max="120" value="15" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+            <p class="text-[11px] text-slate-500 mt-1">Desde el inicio del turno hasta este minuto = tolerancia (amarillo). A partir del minuto siguiente = llegada tarde (rojo).</p>
+          </div>
+          <div>
+            <label class="block text-xs uppercase text-slate-400 mb-1">Ventana de egreso (min)</label>
+            <input type="number" id="cfgToleranciaEgreso" min="0" max="120" value="30" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+            <p class="text-[11px] text-slate-500 mt-1">Tras el fin del turno hay este margen para marcar salida. Si se supera, se computan como horas extra TODOS los minutos desde el fin del turno (no solo el excedente).</p>
+          </div>
+          <div>
+            <label class="block text-xs uppercase text-slate-400 mb-1">Radio de fichaje (m)</label>
+            <input type="number" id="cfgRadioFichaje" min="10" max="5000" value="100" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+            <p class="text-[11px] text-slate-500 mt-1">Distancia máxima al objetivo para poder fichar. Por defecto 100 m.</p>
+          </div>
+          <div>
+            <label class="block text-xs uppercase text-slate-400 mb-1">Precisión GPS mínima (m)</label>
+            <input type="number" id="cfgPrecisionMaxima" min="0" max="2000" value="0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+            <p class="text-[11px] text-slate-500 mt-1">Umbral de precisión GPS que valida el servidor (Worker). Si la señal reportada por el dispositivo es peor que este valor, la fichada se BLOQUEA. 0 = desactivado (no bloquea por precisión).</p>
+          </div>
+          <div>
+            <label class="block text-xs uppercase text-slate-400 mb-1">Anti-repetición de fichadas (seg)</label>
+            <input type="number" id="cfgAntiReplaySegundos" min="0" max="3600" value="90" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+            <p class="text-[11px] text-slate-500 mt-1">Ventana en la que el servidor rechaza como duplicada una fichada repetida (mismo legajo, tipo y objetivo). Por defecto 90 s (activo). Poné 0 para desactivarlo.</p>
+          </div>
+        </div>
+        <!-- SEGURIDAD BIOMÉTRICA (modo estricto / fail-closed) -->
+        <div class="mt-5 border-t border-slate-700 pt-5">
+          <label class="flex items-start gap-3 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 cursor-pointer hover:border-emerald-500 transition">
+            <input type="checkbox" id="cfgBiometriaEstricta" class="mt-1 accent-emerald-500 w-4 h-4">
+            <span>
+              <span class="block text-sm font-semibold text-white">Exigir coincidencia facial para poder fichar (modo estricto)</span>
+              <span class="block text-[11px] text-slate-400 mt-0.5">Si está activado, NADIE puede fichar sin que su rostro coincida con la Foto Master cargada. Si la IA no está disponible, no hay Foto Master, la foto es ilegible o el rostro no coincide, la fichada se BLOQUEA (no queda "para revisar"). Requisito: TODOS los empleados deben tener su Foto Master cargada. Si está desactivado, la app sigue funcionando como hasta ahora (marca las dudosas para revisión, pero no bloquea).</span>
+            </span>
+          </label>
+        </div>
+
+        <div class="flex items-center gap-3 mt-5">
+          <button type="button" id="btnGuardarConfig" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl text-sm transition flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i> Guardar configuración
+          </button>
+          <span id="cfgEstadoGuardado" class="text-xs"></span>
+        </div>
+      </div>
+
+      <!-- MODO DE DISPOSITIVO (individual vs compartido) -->
+      <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl max-w-2xl">
+        <div class="flex items-center gap-3 mb-1">
+          <i class="fa-solid fa-mobile-screen-button text-emerald-400 text-lg"></i>
+          <h3 class="font-bold text-white text-base">Modo de dispositivo de fichaje</h3>
+        </div>
+        <p class="text-xs text-slate-400 mb-5">Define cómo se comporta la sesión en la pantalla de fichaje de los empleados. Se aplica a todos los dispositivos.</p>
+        <div class="space-y-3">
+          <label class="flex items-start gap-3 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 cursor-pointer hover:border-emerald-500 transition">
+            <input type="radio" name="modoDispositivo" id="modoCompartido" value="compartido" class="mt-1 accent-emerald-500">
+            <span>
+              <span class="block text-sm font-semibold text-white">Compartido (recomendado para puestos fijos)</span>
+              <span class="block text-[11px] text-slate-400 mt-0.5">La sesión se cierra automáticamente tras cada fichada y por inactividad (~2 min). Cada empleado debe ingresar su legajo y PIN. Ideal para una tablet/celular compartido en la guárdia.</span>
+            </span>
+          </label>
+          <label class="flex items-start gap-3 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 cursor-pointer hover:border-emerald-500 transition">
+            <input type="radio" name="modoDispositivo" id="modoIndividual" value="individual" class="mt-1 accent-emerald-500">
+            <span>
+              <span class="block text-sm font-semibold text-white">Individual (celular personal del vigilador)</span>
+              <span class="block text-[11px] text-slate-400 mt-0.5">La sesión se mantiene abierta tras fichar (no se cierra sola). Útil cuando cada empleado usa su propio teléfono. Menos seguro si el dispositivo se comparte o se pierde.</span>
+            </span>
+          </label>
+        </div>
+        <div class="flex items-center gap-3 mt-5">
+          <button type="button" id="btnGuardarModo" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl text-sm transition flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i> Guardar modo
+          </button>
+          <span id="cfgEstadoModo" class="text-xs"></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL DE ALERTA DE PÁNICO DE EMERGENCIA CRÍTICA (ESTÁTICO PARA FACILITAR LECTURA Y CLICS) -->
+  <div id="modalPanicoAdmin" class="fixed inset-0 bg-rose-950/90 backdrop-blur-md hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border-2 border-rose-500 rounded-2xl p-6 max-w-md w-full text-center space-y-5 shadow-2xl">
+      <div class="w-20 h-20 bg-rose-600 text-white rounded-full flex items-center justify-center mx-auto text-3xl animate-pulse shadow-lg shadow-rose-600/50">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div>
+        <span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 font-black px-3 py-1 rounded-full text-xs uppercase tracking-widest inline-block mb-2">¡ALERTA DE PÁNICO ACTIVADA!</span>
+        <h2 id="panicoNombre" class="text-2xl font-black text-white">Vigilador En Riesgo</h2>
+        <p id="panicoDetalle" class="text-sm text-slate-300 mt-1"></p>
+        <p id="panicoHora" class="text-xs font-mono text-rose-400 mt-2 font-bold"></p>
+      </div>
+      
+      <div id="panicoUbicacionBox" class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs">
+        <a id="panicoMapaUrl" href="#" target="_blank" class="text-sky-400 hover:underline font-bold flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-map-location-dot"></i> Ver Ubicación GPS en Google Maps
+        </a>
+      </div>
+
+      <button id="btnApagarPanico" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-3.5 rounded-xl text-base transition shadow-xl flex items-center justify-center gap-2 cursor-pointer">
+        <i class="fa-solid fa-volume-xmark text-xl"></i> APAGAR ALARMA / ATENDER
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL VER FOTO SIMPLE -->
+  <div id="modalFoto" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 max-w-lg w-full relative space-y-4">
+      <button id="btnCerrarModal" class="absolute top-3 right-3 text-slate-400 hover:text-white text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <h3 class="font-bold text-white text-base">Archivo Adjunto / Foto</h3>
+      <div class="w-full h-80 bg-slate-950 rounded-xl overflow-hidden flex items-center justify-center relative">
+        <img id="imgModal" src="" alt="Foto Adjunta" class="w-full h-full object-contain">
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ACCION DE GESTION DE FRAUDE -->
+  <div id="modalAccionFraude" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-md w-full relative space-y-5">
+      <button id="btnCerrarFraude" class="absolute top-3 right-3 text-slate-400 hover:text-white text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="flex items-center gap-3 border-b border-slate-700 pb-3">
+        <div id="fraudeModalIcono" class="w-10 h-10 bg-rose-500/20 border border-rose-500/40 rounded-xl flex items-center justify-center text-rose-400 text-lg">
+          <i class="fa-solid fa-shield-cat"></i>
+        </div>
+        <div>
+          <h3 id="fraudeModalTitulo" class="font-bold text-white text-base">Gestión de Fraude</h3>
+          <p id="fraudeModalSubtitulo" class="text-xs text-slate-400">Toma una acción sobre esta alerta</p>
+        </div>
+      </div>
+
+      <input type="hidden" id="fraudeFirebaseId">
+      <div id="fraudeDetalleFichada" class="p-3 bg-slate-900 border border-slate-700 rounded-xl text-xs space-y-1 text-slate-300"></div>
+
+      <div class="space-y-2">
+        <button id="btnAprobarFichada" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-md">
+          <i class="fa-solid fa-circle-check"></i> Aceptar y validar la fichada
+        </button>
+        <button id="btnAnularFichada" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-md">
+          <i class="fa-solid fa-ban"></i> Anular la fichada
+        </button>
+        <button id="btnCotejarFichada" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-2 px-4 rounded-xl text-xs transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-images text-amber-400"></i> Cotejar / Ver evidencia
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL AUDITORÍA IA COMPARATIVO DE FOTOS -->
+  <div id="modalAuditoriaIA" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-2xl w-full relative space-y-5">
+      <button id="btnCerrarAud" class="absolute top-3 right-3 text-slate-400 hover:text-white text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="flex items-center gap-2 border-b border-slate-700 pb-3">
+        <i class="fa-solid fa-brain text-amber-400 text-xl"></i>
+        <h3 class="font-bold text-white text-lg">Informe de Auditoría Facial / IA</h3>
+      </div>
+
+      <!-- Resumen del Alerta -->
+      <div id="boxAlertaAuditoria" class="p-4 rounded-xl border flex flex-col gap-2">
+        <div class="flex justify-between items-center">
+          <span id="lblTipoAlerta" class="font-extrabold text-sm uppercase"></span>
+          <span id="lblDistanciaEuclidiana" class="text-xs font-mono bg-slate-900/80 px-2.5 py-1 rounded-md text-amber-300"></span>
+        </div>
+        <p id="lblMotivoFraude" class="text-xs text-slate-300 mt-1"></p>
+      </div>
+
+      <!-- Comparador de Fotos -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-center space-y-2">
+          <span class="text-xs font-semibold text-slate-400 block uppercase">Foto de Fichada</span>
+          <div class="w-full h-48 bg-slate-950 rounded-lg overflow-hidden flex items-center justify-center">
+            <img id="imgAuditoriaFichada" src="" class="w-full h-full object-contain">
+          </div>
+        </div>
+        
+        <div class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-center space-y-2">
+          <span class="text-xs font-semibold text-slate-400 block uppercase">Foto Máster (Referencia)</span>
+          <div class="w-full h-48 bg-slate-950 rounded-lg overflow-hidden flex items-center justify-center">
+            <img id="imgAuditoriaMaster" src="" class="w-full h-full object-contain">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button id="btnCerrarAud2" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-4 py-2 rounded-xl text-sm transition">
+          Cerrar Detalle
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR PERSONAL -->
+  <div id="modalEditarPersonal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-md w-full relative space-y-4">
+      <button id="btnCerrarEdit" class="absolute top-3 right-3 text-slate-400 hover:text-white text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <h3 class="font-bold text-white text-lg flex items-center gap-2">
+        <i class="fa-solid fa-user-pen text-amber-500"></i> Editar Personal
+      </h3>
+      <input type="hidden" id="editFirebaseId">
+      
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs uppercase text-slate-400 mb-1">N° Legajo</label>
+          <input type="text" id="editLegajo" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+        </div>
+        <div>
+          <label class="block text-xs uppercase text-slate-400 mb-1">Nombre Completo</label>
+          <input type="text" id="editNombre" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+        </div>
+        <div>
+          <label class="block text-xs uppercase text-slate-400 mb-1">PIN <span class="text-slate-500 normal-case">(dejar vacío para no cambiar)</span></label>
+          <input type="text" inputmode="numeric" maxlength="6" autocomplete="off" id="editPin" placeholder="4 a 6 dígitos" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-amber-400 font-mono font-bold tracking-widest text-center focus:outline-none focus:border-amber-500">
+        </div>
+        <div>
+          <label class="block text-xs uppercase text-slate-400 mb-1">Actualizar Foto Máster</label>
+          <input type="file" id="editFotoMaster" accept="image/*" class="w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-700 file:text-amber-400 hover:file:bg-slate-600 cursor-pointer">
+          <div id="previewFotoActual" class="mt-2 text-xs font-semibold"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-700">
+          <div>
+            <label class="block text-xs uppercase text-slate-400 mb-1">Horario habitual - Inicio</label>
+            <input type="time" id="editHorarioInicio" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+          </div>
+          <div>
+            <label class="block text-xs uppercase text-slate-400 mb-1">Horario habitual - Fin</label>
+            <input type="time" id="editHorarioFin" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+          </div>
+        </div>
+        <div id="bloqueObjetivosEditar">
+          <label class="block text-xs uppercase text-slate-400 mb-2">Objetivos autorizados para este vigilador</label>
+          <div id="editObjetivosAsignados" class="max-h-40 overflow-y-auto bg-slate-950 border border-slate-700 rounded-xl p-3 space-y-2 text-xs">
+            <span class="text-slate-500">Cargando objetivos...</span>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-1">Solo los objetivos marcados podran aparecer en la pantalla de fichada de este vigilador.</p>
+        </div>
+        <div id="avisoRolSinObjetivos" class="hidden">
+          <div class="bg-indigo-500/10 border border-indigo-500/30 rounded-xl p-3 text-[12px] text-indigo-200">
+            <i class="fa-solid fa-user-shield"></i> Este usuario es de <strong>rol de control</strong> (supervisor/administrador). No se le asignan objetivos de fichada: su funcion es supervisar, no fichar en un puesto.
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="btnCerrarEdit2" type="button" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-4 py-2 rounded-xl text-sm font-semibold transition">Cancelar</button>
+        <button type="button" id="btnGuardarEdicion" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-xl text-sm font-bold transition">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL GESTIONAR TURNOS POR FECHA -->
+  <div id="modalTurnosPersonal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[70] overflow-y-auto">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-4xl w-full relative space-y-5 my-6 shadow-2xl">
+      <button id="btnCerrarTurnos" type="button" class="absolute top-3 right-3 text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+      <div class="pr-8">
+        <h3 class="font-bold text-white text-lg flex items-center gap-2"><i class="fa-solid fa-calendar-days text-sky-400"></i> Turnos y cambios por fecha</h3>
+        <p id="turnosPersonalSubtitulo" class="text-xs text-slate-400 mt-1"></p>
+      </div>
+      <form id="formGuardarTurno" class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end bg-slate-900/60 border border-slate-700 rounded-xl p-4">
+        <input type="hidden" id="turnoFirebaseId">
+        <div><label class="block text-xs uppercase text-slate-400 mb-1">Fecha</label><input type="date" id="turnoFecha" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"></div>
+        <div><label class="block text-xs uppercase text-slate-400 mb-1">Objetivo</label><select id="turnoObjetivo" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"><option value="">Cargando...</option></select></div>
+        <div><label class="block text-xs uppercase text-slate-400 mb-1">Inicio</label><input type="time" id="turnoHoraInicio" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"></div>
+        <div><label class="block text-xs uppercase text-slate-400 mb-1">Fin</label><input type="time" id="turnoHoraFin" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"></div>
+        <button type="submit" id="btnGuardarTurno" class="bg-sky-600 hover:bg-sky-500 text-white font-bold py-2 rounded-xl text-sm"><i class="fa-solid fa-save"></i> Guardar</button>
+        <div class="md:col-span-5"><label class="block text-xs uppercase text-slate-400 mb-1">Observación (opcional)</label><input type="text" id="turnoObservacion" placeholder="Ej: Cobertura de franco / cambio de objetivo" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"></div>
+      </form>
+      <div class="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden">
+        <div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead class="bg-slate-950 text-slate-400 uppercase text-xs"><tr><th class="p-3">Fecha</th><th class="p-3">Objetivo</th><th class="p-3">Horario</th><th class="p-3">Observación</th><th class="p-3 text-center">Acciones</th></tr></thead><tbody id="cuerpoTurnosPersonal"><tr><td colspan="5" class="p-6 text-center text-slate-500">Cargando turnos...</td></tr></tbody></table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR OBJETIVO -->
+  <div id="modalEditarObjetivo" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[60] overflow-y-auto">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-3xl w-full relative space-y-5 my-6 shadow-2xl">
+      <button id="btnCerrarObj" type="button" class="absolute top-3 right-3 text-slate-400 hover:text-white text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="flex items-center gap-3 border-b border-slate-700 pb-3 pr-8">
+        <div class="w-10 h-10 bg-sky-500/20 border border-sky-500/40 rounded-xl flex items-center justify-center text-sky-400 text-lg">
+          <i class="fa-solid fa-location-dot"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-white text-base">Editar objetivo / puesto</h3>
+          <p class="text-xs text-slate-400">Corregí la dirección o seleccioná nuevamente la ubicación.</p>
+        </div>
+      </div>
+      <input type="hidden" id="editObjetivoId">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs uppercase text-slate-400 mb-1">Nombre del Objetivo</label>
+          <input type="text" id="editNombreObjetivo" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500">
+        </div>
+        <div>
+          <label class="block text-xs uppercase text-slate-400 mb-1">Dirección exacta</label>
+          <div class="flex gap-2">
+            <input type="text" id="editDireccionObjetivo" class="flex-1 min-w-0 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500">
+            <button type="button" id="btnBuscarDireccionEditar" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-4 rounded-xl text-sm transition" title="Buscar dirección">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="resultadoDireccionEditar" class="hidden"></div>
+      <div id="mapaObjetivoEditar" class="rounded-2xl overflow-hidden border border-slate-700 h-72"></div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs uppercase text-slate-400 mb-1">Latitud</label>
+          <input type="text" id="editLatitudObjetivo" inputmode="decimal" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-emerald-300 font-mono">
+        </div>
+        <div>
+          <label class="block text-xs uppercase text-slate-400 mb-1">Longitud</label>
+          <input type="text" id="editLongitudObjetivo" inputmode="decimal" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-emerald-300 font-mono">
+        </div>
+        <div class="flex flex-col gap-2">
+          <button id="btnaplicarCoordObj_editar" type="button" class="bg-sky-700 hover:bg-sky-600 text-white font-bold px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 py-2.5">
+            <i class="fa-solid fa-map-pin"></i> Aplicar coordenadas manuales
+          </button>
+          <button type="button" id="btnGPSEditar" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 self-end py-2.5">
+            <i class="fa-solid fa-location-crosshairs"></i> Usar GPS actual
+          </button>
+        </div>
+      </div>
+      <div id="infoUbicacionEditar" class="hidden bg-sky-500/10 border border-sky-500/20 rounded-xl p-3 text-xs text-sky-200"></div>
+
+      <!-- ===================================================================== -->
+      <!--  SISTEMA DE RONDAS CON QR - Paso 1 (admin): horario + puntos de control -->
+      <!--  Aditivo: solo aparece al editar un objetivo. No altera la logica previa.-->
+      <!-- ===================================================================== -->
+      <div id="seccionRondas" data-plan-funcion="rondas" class="border-t border-slate-700 pt-2 space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-emerald-500/20 border border-emerald-500/40 rounded-xl flex items-center justify-center text-emerald-400">
+            <i class="fa-solid fa-route"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="font-bold text-white text-sm">Rondas con QR</h4>
+            <p class="text-xs text-slate-400">Puntos de control que el vigilador escanea durante su recorrido.</p>
+          </div>
+          <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+            <input type="checkbox" id="rondaActiva" class="vigix-check">
+            <span>Activar rondas</span>
+          </label>
+        </div>
+
+        <!-- Horario / frecuencia de la ronda -->
+        <div class="bg-slate-900 border border-slate-700 rounded-xl p-4 space-y-3">
+          <p class="text-xs uppercase text-slate-400 font-semibold">Horario de la ronda</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs uppercase text-slate-400 mb-1">Desde</label>
+              <input type="time" id="rondaHoraInicio" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+            </div>
+            <div>
+              <label class="block text-xs uppercase text-slate-400 mb-1">Hasta</label>
+              <input type="time" id="rondaHoraFin" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+            </div>
+            <div>
+              <label class="block text-xs uppercase text-slate-400 mb-1">Cada (min)</label>
+              <input type="number" id="rondaFrecuencia" min="0" placeholder="60" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+            </div>
+            <div>
+              <label class="block text-xs uppercase text-slate-400 mb-1">Tolerancia (min)</label>
+              <input type="number" id="rondaTolerancia" min="0" placeholder="15" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs uppercase text-slate-400 mb-1">Dias</label>
+            <div id="rondaDias" class="flex flex-wrap gap-2"></div>
+          </div>
+          <div class="flex justify-end">
+            <button type="button" id="btnGuardarConfigRonda" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-sm transition inline-flex items-center gap-2">
+              <i class="fa-solid fa-floppy-disk"></i> Guardar horario
+            </button>
+          </div>
+        </div>
+
+        <!-- Alta / edicion de punto de control -->
+        <div class="bg-slate-900 border border-slate-700 rounded-xl p-4 space-y-3">
+          <p class="text-xs uppercase text-slate-400 font-semibold" id="tituloFormPunto">Agregar punto de control</p>
+          <input type="hidden" id="puntoEditandoId">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="md:col-span-2">
+              <label class="block text-xs uppercase text-slate-400 mb-1">Nombre del punto</label>
+              <input type="text" id="puntoNombre" placeholder="Ej: Porton trasero" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+            </div>
+            <div>
+              <label class="block text-xs uppercase text-slate-400 mb-1">Latitud</label>
+              <input type="text" id="puntoLat" inputmode="decimal" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-emerald-300 font-mono">
+            </div>
+            <div>
+              <label class="block text-xs uppercase text-slate-400 mb-1">Longitud</label>
+              <input type="text" id="puntoLng" inputmode="decimal" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-emerald-300 font-mono">
+            </div>
+            <div>
+              <label class="block text-xs uppercase text-slate-400 mb-1">Radio (m)</label>
+              <input type="number" id="puntoRadio" min="5" placeholder="30" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+            </div>
+            <div>
+              <label class="block text-xs uppercase text-slate-400 mb-1">Precision GPS max (m)</label>
+              <input type="number" id="puntoPrecision" min="5" placeholder="50" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+              <input type="checkbox" id="puntoFoto" class="vigix-check">
+              <span>Exigir foto al escanear</span>
+            </label>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" id="btnGPSPunto" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-2 rounded-xl text-sm transition inline-flex items-center gap-2">
+                <i class="fa-solid fa-location-crosshairs"></i> Usar GPS actual
+              </button>
+              <button type="button" id="btnCancelarEdicionPunto" class="hidden bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold px-3 py-2 rounded-xl text-sm transition">Cancelar</button>
+              <button type="button" id="btnAgregarPunto" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-4 py-2 rounded-xl text-sm transition inline-flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> <span id="btnAgregarPuntoTexto">Agregar punto</span>
+              </button>
+            </div>
+          </div>
+          <p id="infoPuntoRonda" class="hidden text-xs"></p>
+        </div>
+
+        <!-- Lista de puntos de control -->
+        <div class="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-950 text-slate-400 uppercase text-xs">
+                <tr>
+                  <th class="p-3">#</th>
+                  <th class="p-3">Punto</th>
+                  <th class="p-3">Radio / Foto</th>
+                  <th class="p-3 text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="cuerpoPuntosRonda">
+                <tr><td colspan="4" class="p-6 text-center text-slate-500">Sin puntos cargados.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-700">
+        <button id="btnCerrarObj2" type="button" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-4 py-2.5 rounded-xl text-sm font-semibold transition">Cancelar</button>
+        <button type="button" id="btnGuardarEdicionObjetivo" class="bg-sky-600 hover:bg-sky-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL VER / IMPRIMIR QR DE PUNTO DE RONDA -->
+  <div id="modalQRPunto" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[60] overflow-y-auto">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-md w-full relative space-y-4 my-6 shadow-2xl">
+      <button id="btnCerrarQR" type="button" class="no-print absolute top-3 right-3 text-slate-400 hover:text-white text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="qr-print-card vigix-qr-card rounded-xl p-5 text-center space-y-3">
+        <div>
+          <p class="text-xs uppercase tracking-widest font-bold" id="qrObjetivoNombre">Objetivo</p>
+          <p class="text-lg font-extrabold" id="qrPuntoNombre">Punto</p>
+        </div>
+        <div id="qrContenedor" class="vigix-qr-box"></div>
+        <p class="text-xs font-mono vigix-break" id="qrPayloadTexto"></p>
+        <p class="text-xs">Escanea este codigo con la app del vigilador.</p>
+      </div>
+      <div class="no-print flex flex-wrap justify-end gap-2 pt-2">
+        <button id="btnDescargarQR" type="button" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-sm transition inline-flex items-center gap-2"><i class="fa-solid fa-download"></i> Descargar PNG</button>
+        <button id="btnImprimirQR" type="button" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-4 py-2 rounded-xl text-sm transition inline-flex items-center gap-2"><i class="fa-solid fa-print"></i> Imprimir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE ALERTAS DE FICHADAS BLOQUEADAS -->
+  <div id="modalAlertasFichadas" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[60]">
+    <div class="bg-slate-900 border border-rose-500/40 rounded-2xl p-5 md:p-6 max-w-2xl w-full relative shadow-2xl space-y-4 max-h-[85vh] overflow-hidden flex flex-col">
+      <button id="btnCerrarAlertas" class="absolute top-3 right-3 text-slate-400 hover:text-white text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="flex items-center gap-3 border-b border-slate-700 pb-3 pr-8">
+        <div class="w-11 h-11 bg-rose-500/15 border border-rose-500/30 rounded-xl flex items-center justify-center text-rose-400 text-lg">
+          <i class="fa-solid fa-bell"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-white text-lg">Alertas de fichadas</h3>
+          <p class="text-xs text-slate-400">Intentos bloqueados por encontrarse fuera del radio del objetivo</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button id="btnNotifNav" class="bg-sky-600/20 hover:bg-sky-600/30 text-sky-300 border border-sky-500/30 px-3 py-2 rounded-lg text-xs font-semibold transition">
+          <i class="fa-solid fa-desktop"></i> Activar avisos del navegador
+        </button>
+        <button id="btnMarcarVistas2" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2 rounded-lg text-xs font-semibold transition">
+          <i class="fa-solid fa-check-double"></i> Marcar todas como vistas
+        </button>
+      </div>
+      <div id="listaAlertasFichadas" class="overflow-y-auto space-y-2 pr-1"></div>
+    </div>
+  </div>
+
+  <!-- MODAL COMPROBANTE DE PIN / ACCESO (patron "mostrar una sola vez") -->
+  <div id="modalComprobantePin" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[80]">
+    <div class="bg-slate-800 border border-emerald-500/40 rounded-2xl p-5 md:p-6 max-w-md w-full relative shadow-2xl space-y-4">
+      <button id="btnCerrarComprobante" type="button" class="no-print absolute top-3 right-3 text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+      <div class="comprobante-card space-y-4">
+        <div class="flex items-center gap-3 border-b border-slate-700 pb-3 pr-8">
+          <div class="w-11 h-11 bg-emerald-500/15 border border-emerald-500/30 rounded-xl flex items-center justify-center text-emerald-400 text-lg"><i class="fa-solid fa-id-badge"></i></div>
+          <div>
+            <h3 id="comprobanteTitulo" class="font-bold text-white text-lg">Nuevo acceso creado</h3>
+            <p class="text-xs text-slate-400">Comprobante de acceso · vga security 24 - Control operativo y asistencia</p>
+          </div>
+        </div>
+        <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-[12px] text-amber-200 no-print">
+          <i class="fa-solid fa-triangle-exclamation"></i> Guardá o imprimí este comprobante <strong>ahora</strong>: el PIN no se vuelve a mostrar. Si se pierde, podés resetearlo desde "Configurar".
+        </div>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between gap-3"><span class="text-slate-400">Nombre</span><span id="comprobanteNombre" class="text-white font-semibold text-right"></span></div>
+          <div class="flex justify-between gap-3"><span class="text-slate-400">Legajo</span><span id="comprobanteLegajo" class="text-white font-semibold text-right"></span></div>
+          <div class="flex justify-between gap-3"><span class="text-slate-400">Rol</span><span id="comprobanteRol" class="text-white font-semibold text-right"></span></div>
+        </div>
+        <div class="bg-slate-950 border border-emerald-500/30 rounded-xl p-4 text-center">
+          <p class="text-[11px] uppercase tracking-widest text-slate-400 mb-1">PIN de acceso</p>
+          <p id="comprobantePin" class="text-3xl font-mono font-black tracking-[0.3em] text-emerald-400"></p>
+        </div>
+        <p class="text-[11px] text-slate-500">Emitido: <span id="comprobanteFecha"></span> · Ingreso del empleado: legajo + PIN.</p>
+      </div>
+      <div class="flex flex-wrap justify-end gap-2 pt-2 border-t border-slate-700 no-print">
+        <button id="btnComprobanteCopiar" type="button" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2 rounded-xl text-xs font-semibold transition"><i class="fa-solid fa-copy"></i> Copiar datos</button>
+        <button id="btnComprobanteImprimir" type="button" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-2 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-print"></i> Imprimir</button>
+        <button id="btnComprobantePDF" type="button" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-file-pdf"></i> Descargar PDF</button>
+        <button id="btnCerrarComprobante2" type="button" class="bg-slate-800 border border-slate-600 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-xl text-xs font-semibold transition">Listo</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="licencia.js"></script>
+  <script src="admin.app.js?v=20261004d"></script>
+
+  <!-- ============================================================================= -->
+  <!--  ALTA DE EMPLEADOS - Firebase Web SDK v10 (Modular) con App secundaria        -->
+  <!--  Bloque aditivo: no modifica ninguna lógica existente del panel.            -->
+  <!-- ============================================================================= -->
+  <script type="module" src="admin.module.js?v=20261004d"></script>
+</body>
+</html>

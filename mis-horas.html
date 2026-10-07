@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Blindaje CSP: solo se permiten los orígenes que la app realmente usa. -->
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.gstatic.com; style-src 'self' https://cdnjs.cloudflare.com; font-src 'self' data: https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.googleapis.com https://www.gstatic.com https://nominatim.openstreetmap.org https://vga-security-24.micasa27822024.workers.dev; worker-src 'self' blob:; manifest-src 'self'">
+  <title>vga security 24 - Control operativo y asistencia - Mi Historial de Horas y Marcaciones</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="mis-horas.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+
+  <!-- ENCABEZADO Y MENÚ CORPORATIVO -->
+  <header class="bg-slate-900 border-b border-slate-800 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-slate-800 border border-emerald-500/30 rounded-xl flex items-center justify-center overflow-hidden shadow-inner p-1">
+        </div>
+        <div>
+          <span class="text-[10px] font-extrabold tracking-widest text-emerald-400 uppercase block">vga security 24 - Control operativo y asistencia</span>
+          <h1 class="text-lg font-bold text-white tracking-wide">Portal del Vigilador</h1>
+        </div>
+      </div>
+
+      <nav class="flex flex-wrap justify-center items-center gap-1 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700/60">
+                <a href="index.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-house text-emerald-400"></i>
+          <span>Inicio</span>
+        </a>
+<a href="fichadas.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-camera-retro text-emerald-400"></i>
+          <span>Fichadas</span>
+        </a>
+        <a href="rondas.html" data-plan-funcion="rondas" class="hidden px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-route text-emerald-400"></i>
+          <span>Rondas</span>
+        </a>
+        <a href="admin.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-building-shield text-emerald-400"></i>
+          <span>Centro de Operaciones</span>
+        </a>
+        <a href="panel.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-chart-line text-emerald-400"></i>
+          <span>Control en Tiempo Real</span>
+        </a>
+        <a href="mis-horas.html" class="px-3 py-1.5 text-xs font-medium text-white bg-slate-700 rounded-lg transition flex items-center space-x-1.5 shadow-sm">
+          <i class="fa-solid fa-clock text-emerald-400"></i>
+          <span>Control de Mis Horas</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="max-w-4xl mx-auto space-y-6 p-4 md:p-8 flex-grow w-full">
+    
+    <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-user-clock text-emerald-500"></i> Mi Consulta de Horas
+        </h2>
+        <button id="btnCerrarSesion" class="hidden text-xs text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1 bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-lg transition">
+          <i class="fa-solid fa-right-from-bracket"></i> Salir de mi cuenta
+        </button>
+      </div>
+
+      <!-- Formulario de Login -->
+      <form id="formLoginVigilador" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="relative">
+          <i class="fa-solid fa-id-badge absolute left-3 top-3 text-slate-400 text-sm"></i>
+          <input type="text" id="legajoInput" placeholder="Número de Legajo..." class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+        </div>
+        <div class="relative">
+          <i class="fa-solid fa-key absolute left-3 top-3 text-slate-400 text-sm"></i>
+          <input type="password" id="pinInput" placeholder="PIN de seguridad..." class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+        </div>
+        <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg">
+          <i class="fa-solid fa-lock-open"></i> Verificar e Ingresar
+        </button>
+      </form>
+
+      <!-- Previsualización del legajo (nombre + última fichada + próxima acción esperada) -->
+      <div id="previewLegajoVigilador" class="hidden mt-3 bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-300 flex flex-wrap items-center gap-x-4 gap-y-1"></div>
+
+      <!-- Indicador de Sesión Activa -->
+      <div id="infoSesionActiva" class="hidden flex flex-col md:flex-row items-center justify-between bg-slate-900/60 border border-emerald-500/30 px-4 py-2.5 rounded-xl text-xs gap-2">
+        <span class="text-emerald-400 font-medium flex items-center gap-2">
+          <i class="fa-solid fa-circle-check"></i> Sesión activa para el Vigilador: <strong id="lblNombreActivo" class="text-white"></strong> (<span id="lblLegajoActivo"></span>)
+        </span>
+        <span class="text-slate-400"><i class="fa-solid fa-shield-halved text-emerald-400"></i> Bloqueo por inactividad (3 min)</span>
+      </div>
+    </div>
+
+    <!-- MÓDULO DE BOTÓN DE PÁNICO EN VIVO -->
+    <div id="seccionPanico" class="hidden bg-rose-950/40 border-2 border-rose-600/60 p-6 rounded-2xl shadow-2xl text-center space-y-4">
+      <div class="flex items-center justify-center gap-2 text-rose-500 font-black tracking-wider text-xs uppercase">
+        <i class="fa-solid fa-triangle-exclamation animate-pulse text-lg"></i> Alerta de Emergencia Operativa
+      </div>
+      <h3 class="text-lg font-extrabold text-white">¿Enfrentas una situación de peligro inminente?</h3>
+      <p class="text-xs text-slate-300 max-w-lg mx-auto">
+        Mantén presionado el botón durante <strong>3 segundos</strong> para enviar una señal crítica con tu ubicación GPS a la Central.
+      </p>
+
+      <div class="max-w-md mx-auto space-y-2">
+        <button id="btnPanico" class="no-select w-full bg-rose-600 hover:bg-rose-700 text-white font-black py-4 px-6 rounded-2xl text-base tracking-wide transition transform active:scale-95 shadow-lg shadow-rose-600/40 flex items-center justify-center gap-3 border border-rose-400/30 cursor-pointer">
+          <i class="fa-solid fa-shield-cat text-2xl animate-bounce"></i>
+          <span id="textoPanico">MANTÉN PRESIONADO (3s)</span>
+        </button>
+
+        <!-- Barra de Progreso de la Presión -->
+        <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden border border-rose-900/50">
+          <div id="barraProgresoPanico" class="bg-rose-500 h-full w-0 transition-all duration-75"></div>
+        </div>
+        <!-- Aviso de alertas de pánico que quedaron encoladas sin conexión -->
+        <p id="avisoPanicosPendientes" class="hidden text-xs font-semibold text-amber-300 bg-amber-950/40 border border-amber-600/50 rounded-lg px-3 py-2"></p>
+      </div>
+    </div>
+
+    <!-- FILTROS DE FECHA (MES Y DÍA) -->
+    <div id="seccionFiltros" class="hidden bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-slate-400 font-semibold"><i class="fa-solid fa-calendar-days text-emerald-400"></i> Mes:</label>
+          <select id="filtroMes" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+            <option value="todos">Todos los meses</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-slate-400 font-semibold"><i class="fa-solid fa-filter text-emerald-400"></i> Día específico:</label>
+          <input type="date" id="filtroDia" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+        </div>
+      </div>
+
+      <button id="btnLimpiarFiltros" class="text-xs text-slate-400 hover:text-white bg-slate-700/50 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition">
+        <i class="fa-solid fa-rotate-right"></i> Limpiar filtros
+      </button>
+    </div>
+
+    <!-- TARJETAS DE RESUMEN -->
+    <div id="resumenHoras" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
+        <p class="text-xs text-slate-400 font-semibold">HORAS DIURNAS (06-21hs)</p>
+        <p id="horasDiurnas" class="text-2xl font-bold text-amber-400 mt-1">00:00 hs</p>
+      </div>
+      <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
+        <p class="text-xs text-slate-400 font-semibold">HORAS NOCTURNAS (21-06hs)</p>
+        <p id="horasNocturnas" class="text-2xl font-bold text-indigo-400 mt-1">00:00 hs</p>
+      </div>
+      <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
+        <p class="text-xs text-slate-400 font-semibold">TOTAL TRABAJADO</p>
+        <p id="horasTotales" class="text-2xl font-bold text-emerald-400 mt-1">00:00 hs</p>
+      </div>
+    </div>
+
+    <!-- TABLA DE DETALLE -->
+    <div id="contenedorTabla" class="hidden bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden shadow-xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-700">
+            <tr>
+              <th class="p-4">Entrada</th>
+              <th class="p-4">Salida</th>
+              <th class="p-4">Objetivo</th>
+              <th class="p-4 text-center">Diurnas</th>
+              <th class="p-4 text-center">Nocturnas</th>
+              <th class="p-4 text-center">Total</th>
+            </tr>
+          </thead>
+          <tbody id="cuerpoDetalle" class="divide-y divide-slate-700/50"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MÓDULO DE NOVEDADES E INCIDENCIAS -->
+    <div id="seccionNovedades" class="hidden bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+      <h3 class="text-lg font-bold text-white flex items-center gap-2">
+        <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> Reportar Novedad o Incidencia
+      </h3>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Tipo de Incidencia:</label>
+          <select id="tipoIncidencia" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+            <option value="Novedad de Guardia">Novedad de Guardia / Operativa</option>
+            <option value="Mantenimiento">Mantenimiento / Instalaciones</option>
+            <option value="Visita Autorizada">Visita / Proveedor</option>
+            <option value="Urgencia">Urgencia / Emergencia</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Adjuntar Foto (Opcional):</label>
+          <input type="file" id="fotoNovedadInput" accept="image/*" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-1.5 text-xs text-slate-300 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-500 cursor-pointer">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Descripción del evento:</label>
+        <textarea id="descNovedad" rows="3" placeholder="Detalle lo sucedido en el servicio..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-emerald-500"></textarea>
+      </div>
+
+      <button id="btnEnviarNovedad" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg">
+        <i class="fa-solid fa-paper-plane"></i> Enviar Novedad a la Central
+      </button>
+      <!-- Aviso de novedades que quedaron encoladas sin conexión -->
+      <p id="avisoNovedadesPendientes" class="hidden text-xs font-semibold text-amber-300 bg-amber-950/40 border border-amber-600/50 rounded-lg px-3 py-2"></p>
+    </div>
+
+  </main>
+
+  <script src="licencia.js"></script>
+  <script src="mis-horas.app.js"></script>
+  <!-- Capa visual: oculta en la nav las funciones que el plan no incluye. -->
+  <script src="plan-nav.js?v=20261005a"></script>
+
+  <!-- ============================================================================= -->
+  <!--  VERIFICACIÓN DE PIN DEL VIGILADOR - Firebase Auth (Web SDK v10 modular)       -->
+  <!--  Bloque aditivo: el acceso a "Mis Horas" valida legajo + PIN en el servidor.  -->
+  <!-- ============================================================================= -->
+  <script type="module" src="mis-horas.module.js"></script>
+</body>
+</html>

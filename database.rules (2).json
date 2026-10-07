@@ -1,0 +1,372 @@
+{
+  "rules": {
+    // ===================================================================
+    //  VARIANTE SA-ONLY (LOCKDOWN FINAL DE FICHADAS)
+    //  Igual a reglas-firebase-turnos-acotados.json, con UN cambio de seguridad:
+    //  el vigilador YA NO puede crear /fichadas ni /fichadasPendientes por REST.
+    //  La UNICA via para persistir una fichada del vigilador es el Cloudflare
+    //  Worker (accion 'fichar'), que revalida objetivo + geocerca GPS y escribe
+    //  con la SERVICE ACCOUNT (la SA bypassa las Reglas, por eso su escritura
+    //  sigue funcionando aunque aqui el cliente quede en 'solo admin').
+    //  Efecto: aunque un atacante manipule una peticion REST con coordenadas o
+    //  ubicacionValidada falsas, las Reglas la RECHAZAN (no es admin ni SA); no
+    //  hay puerta lateral. El admin conserva create/modify para correcciones.
+    //  DESPLEGAR SOLO despues de que la cola offline sincronice via Worker.
+    // ===================================================================
+    // ===================================================================
+    //  REGLAS FINALES  (PASO 3: desplegar DESPUES de poblar /usuarios)
+    //  Construidas SOBRE tus reglas actuales (mismos nodos), aplicando SOLO
+    //  los cambios de seguridad de la auditoria. Requieren el mapa
+    //  /usuarios/<uid> = { legajo (STRING), rol }.
+    //
+    //  CAMBIOS RESPECTO DE TUS REGLAS ACTUALES (hallazgos):
+    //   [1] /usuarios: solo ADMIN escribe el mapa (asignar legajo/rol).
+    //   [2] /credenciales: nodo aislado; solo ADMIN escribe, cada uno lee la suya.
+    //   [3] configuracion*: quita 'supervisor' del .write (supervisor NO escribe).
+    //   [4] personal: .read pasa de PUBLICO a ADMIN/SUPERVISOR/DUENO-por-legajo;
+    //       .write solo ADMIN (antes tambien supervisor).
+    //   [5] objetivos: .read pasa a 'auth != null' (catalogo compartido, sin PII);
+    //       .write solo ADMIN.
+    //   [5b] asignacionesTurnos: .read ACOTADO por legajo (igual que fichadas):
+    //       ADMIN/SUPERVISOR leen todo; el vigilador SOLO puede leer si la
+    //       consulta viene acotada a su propio legajo
+    //       (query.orderByChild==='legajo' && query.equalTo===su legajo).
+    //       Un autenticado ya NO puede descargar los turnos de todos.
+    //       .write solo ADMIN. ENFORCED server-side, no manipulable desde el cliente.
+    //   [6] fichadas: .read pasa a ADMIN/SUPERVISOR/DUENO-por-legajo;
+    //       modificar/borrar una fichada existente = SOLO ADMIN (crear sigue
+    //       permitido a cualquier autenticado, para el fichaje).
+    //       ENFORCED server-side: al CREAR, newData.legajo DEBE ser igual al
+    //       legajo del uid autenticado (root/usuarios/<uid>/legajo). Un
+    //       autenticado NO puede fichar por otro legajo. El admin queda exento
+    //       (puede crear/corregir fichadas de cualquier legajo). No manipulable
+    //       desde el cliente: la comprobacion vive en las Reglas.
+    //
+    //   [7] alertas* / panicos / novedades: .read pasa de PUBLICO a
+    //       ADMIN/SUPERVISOR (solo admin.html los lee, a nodo completo, ya
+    //       autenticado). index.html y mis-horas.html solo ESCRIBEN estos
+    //       nodos (POST), gobernado por .write, no por .read: no se rompen.
+    //   [8] fichadasPendientes: .read pasa de PUBLICO a ADMIN/SUPERVISOR/
+    //       DUENO-por-legajo (mismo criterio que /fichadas). El admin la lee a
+    //       nodo completo para la limpieza de PIN; el kiosco usa localStorage.
+    //   [9] auditoria: .read pasa de PUBLICO a SOLO ADMIN (bitacora inmutable;
+    //       crear sigue append-only con !data.exists()).
+    //  [10] configuracion* (Asistencia/Empresa/Global): .read pasa de PUBLICO a
+    //       'auth != null'. configuracionGlobal la lee el vigilador logueado
+    //       (modoDispositivo, radio, tolerancias); no es PII, pero ya no es
+    //       publica. .write sigue SOLO ADMIN.
+    //
+    //  Todos los nodos con datos ahora exigen sesion (no queda .read publico
+    //  salvo objetivos que es 'auth != null'). asignacionesTurnos queda
+    //  acotado por legajo para el vigilador.
+    //
+    //  legajo SIEMPRE como STRING (aca y en /usuarios) y consultar con la
+    //  variante string (equalTo=\"123\"). La consulta numerica sera DENEGADA.
+    // ===================================================================
+    ".read": false,
+    ".write": false,
+    "usuarios": {
+      // El admin puede listar todo el mapa.
+      ".read": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() === 'admin'",
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('usuarios').child(auth.uid).child('rol').val() === 'admin')",
+        // [1] [#4] LOCKDOWN: ningun cliente escribe el mapa /usuarios por REST.
+        //     El alta/edicion/baja de la identidad (legajo + rol) la hace SOLO
+        //     el Worker con la service account (bypassa estas Reglas), previa
+        //     verificacion de idToken + rol admin server-side. Antes el admin
+        //     podia escribir aqui directo (token admin robado -> alta/edicion
+        //     de usuarios sin pasar por el Worker ni por la auditoria).
+        ".write": false,
+        ".validate": "newData.hasChild('legajo')"
+      }
+    },
+    // [2] Credenciales aisladas (hash+salt del PIN). Nunca se listan.
+    "credenciales": {
+      ".read": false,
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('usuarios').child(auth.uid).child('rol').val() === 'admin')",
+        // [#4] LOCKDOWN: ningun cliente escribe credenciales por REST. El alta/
+        //      cambio/baja del PIN hasheado la hace SOLO el Worker con la service
+        //      account (bypassa Reglas), tras validar idToken + rol admin.
+        ".write": false
+      }
+    },
+    // [3] Config: lectura para autenticados; escritura solo ADMIN.
+    "configuracionAsistencia": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() === 'admin'"
+    },
+    "configuracionEmpresa": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() === 'admin'"
+    },
+    "configuracionGlobal": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() === 'admin'",
+      // [PLAN] CANDADO INFRANQUEABLE DEL FICHAJE OFFLINE:
+      //   El admin puede guardar toda la configuracion global, PERO no puede
+      //   PONER offlineHabilitado = true salvo que el plan contratado incluya
+      //   la funcion 'modoOffline' (config/plan/funciones/modoOffline === true)
+      //   y la cuenta NO este suspendida. Apagarlo (false) siempre se permite.
+      //   Como config/plan solo lo escribe el Worker con la service account, la
+      //   empresa NO puede auto-habilitarse el offline: lo decide el dueno del
+      //   servicio. Si intenta activarlo sin plan, Firebase RECHAZA la escritura
+      //   (aunque se intente por REST directo). .validate solo se evalua cuando
+      //   el PATCH incluye offlineHabilitado, por eso guardar el resto de la
+      //   config (radio, tolerancias, modo) sigue funcionando sin trabas.
+      "offlineHabilitado": {
+        ".validate": "newData.val() === false || (root.child('config/plan/funciones/modoOffline').val() === true && root.child('config/plan/estado').val() !== 'suspendido')"
+      }
+    },
+    // [PLAN] Topes del plan contratado (cantidad de vigiladores y objetivos).
+    //   - LECTURA: cualquier usuario logueado puede LEER el plan para que el
+    //     panel muestre los indicadores "X / maximo". No expone nada sensible.
+    //   - ESCRITURA: BLOQUEADA para TODO cliente (incluido el admin). El plan lo
+    //     fija UNICAMENTE el Cloudflare Worker con la service account (accion
+    //     ownerFijarPlan, protegida por OWNER_KEY). Asi la empresa cliente NO
+    //     puede subirse el tope sola: solo el dueno del servicio lo cambia.
+    "config": {
+      "plan": {
+        ".read": "auth != null",
+        ".write": false
+      }
+    },
+    // [11] Dispositivos (FASE 3, fichaje offline): padron
+    //      dispositivos/{deviceId} = { activo, secreto (HMAC), nombre, legajos[] }.
+    //      LOCKDOWN TOTAL SA-ONLY. Ningun cliente (ni admin, ni supervisor, ni
+    //      vigilador) lee o escribe este nodo por REST:
+    //        - El 'secreto' es la clave HMAC del dispositivo: si un cliente
+    //          pudiera leerlo, se podrian FORJAR lotes offline de cualquier
+    //          dispositivo. Por eso .read = false SIEMPRE.
+    //        - El alta/baja/edicion/rotacion la hace SOLO el Cloudflare Worker
+    //          con la SERVICE ACCOUNT (bypassa estas Reglas), previa validacion
+    //          de idToken + rol admin server-side (acciones crearDispositivo /
+    //          actualizarDispositivo / eliminarDispositivo / listarDispositivos).
+    //        - El Worker tambien lee dispositivos/{deviceId}/secreto con la SA
+    //          para verificar la firma del lote offline (accion
+    //          ficharLoteOffline). El vigilador solo posee su copia del secreto
+    //          en el localStorage de su propio dispositivo (via vinculacion).
+    //      Efecto: aunque un token admin sea robado, NO se puede extraer ningun
+    //      secreto de dispositivo por REST. La superficie de ataque del HMAC
+    //      queda reducida al dispositivo fisico ya vinculado.
+    "dispositivos": {
+      ".read": false,
+      ".write": false,
+      "$deviceId": {
+        ".read": false,
+        ".write": false
+      }
+    },
+    // [4] Personal: lectura ya NO publica.
+    "personal": {
+      ".indexOn": ["legajo", "authUid"],
+      ".read": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor' || (query.orderByChild === 'legajo' && query.equalTo === root.child('usuarios').child(auth.uid).child('legajo').val()))",
+      // [#4] LOCKDOWN DE ESCRITURA: ningun cliente escribe /personal por REST.
+      //      El alta/edicion/estado/baja de la ficha la hace SOLO el Worker con
+      //      la service account (bypassa estas Reglas), tras validar idToken +
+      //      rol admin y auditar el cambio. La LECTURA sigue igual (admin/
+      //      supervisor/el propio vigilador por legajo).
+      ".write": false,
+      "$id": {
+        ".read": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor' || data.child('legajo').val() === root.child('usuarios').child(auth.uid).child('legajo').val())",
+        // [4b] BLINDAJE DE OBJETIVOS POR ROL (server-side):
+        //   Un usuario cuyo rol en /usuarios/<uid> sea 'admin' o 'supervisor'
+        //   (rol de CONTROL) NO puede tener objetivos de fichada asignados.
+        //   Como /personal esta indexado por el MISMO uid que /usuarios, aqui
+        //   $id === uid, y consultamos su rol con root.child('usuarios').child($id).
+        //   Si es rol de control, se EXIGE que 'objetivosAsignados' no exista
+        //   (en RTDB un arreglo vacio [] se guarda como ausencia, asi que esto
+        //   acepta 'sin objetivos' y RECHAZA cualquier intento con objetivos).
+        //   Para un vigilador (rol 'empleado' o sin mapa) la regla no aplica.
+        //   Nota: la Service Account del Worker BYPASSEA estas Reglas; este
+        //   control cierra la via REST directa (token admin robado / manipulado).
+        ".validate": "newData.hasChildren(['legajo', 'nombre', 'estado']) && newData.child('legajo').isString() && (!(root.child('usuarios').child($id).child('rol').val() === 'admin' || root.child('usuarios').child($id).child('rol').val() === 'supervisor') || !newData.child('objetivosAsignados').exists())"
+      }
+    },
+    // [5] Objetivos: lectura para autenticados; escritura solo ADMIN.
+    //      [PLAN] CANDADO INFRANQUEABLE DE RONDAS (control de puntos):
+    //      El admin puede crear/editar/borrar objetivos normalmente, PERO toda
+    //      escritura del subarbol de rondas de un objetivo
+    //      (objetivos/$id/rondas/config y objetivos/$id/rondas/puntos/$punto)
+    //      exige que el plan incluya la funcion 'rondas' (config/plan/funciones/
+    //      rondas === true) y que la cuenta NO este suspendida. Se usa .validate
+    //      en el punto EXACTO de escritura (config y cada punto), que se evalua
+    //      justo donde se escriben los datos: asi editar el nombre/direccion de
+    //      un objetivo NO se bloquea, pero crear o editar un punto de ronda SI,
+    //      si el plan no lo incluye. Como config/plan solo lo escribe el Worker
+    //      con la service account, la empresa NO puede auto-habilitarse rondas.
+    //      Borrar puntos (DELETE) sigue permitido (limpieza), no lo frena.
+    "objetivos": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() === 'admin'",
+      "$id": {
+        "rondas": {
+          "config": {
+            ".validate": "root.child('config/plan/funciones/rondas').val() === true && root.child('config/plan/estado').val() !== 'suspendido'"
+          },
+          "puntos": {
+            "$punto": {
+              ".validate": "root.child('config/plan/funciones/rondas').val() === true && root.child('config/plan/estado').val() !== 'suspendido'"
+            }
+          }
+        }
+      }
+    },
+    // [5b] asignacionesTurnos: .read ACOTADO por legajo (patron de fichadas).
+    //      ADMIN/SUPERVISOR leen todo; el vigilador SOLO su propio legajo.
+    "asignacionesTurnos": {
+      ".indexOn": ["legajo", "fecha"],
+      ".read": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor' || (query.orderByChild === 'legajo' && query.equalTo === root.child('usuarios').child(auth.uid).child('legajo').val()))",
+      ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() === 'admin'"
+    },
+    // [6] Fichadas: lectura scopeada; crear=autenticado, modificar/borrar=solo ADMIN.
+    "fichadas": {
+      ".indexOn": ["legajo", "timestampServidor", "fechaHoraDispositivo"],
+      ".read": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor' || (query.orderByChild === 'legajo' && query.equalTo === root.child('usuarios').child(auth.uid).child('legajo').val()))",
+      "$id": {
+        ".read": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor' || data.child('legajo').val() === root.child('usuarios').child(auth.uid).child('legajo').val())",
+        // [SA-ONLY] El cliente vigilador NO crea fichadas: solo ADMIN (correcciones)
+        // o la SERVICE ACCOUNT (bypassa Reglas) via Worker. Se elimino la clausula
+        // '(!data.exists() && auth != null)' que permitia a cualquier autenticado
+        // crear por REST. Cierra el fake-GPS/objetivo desde peticiones manipuladas.
+        ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() === 'admin'",
+        // ENDURECIDO: al CREAR una fichada, ademas de exigir que el legajo sea el
+        // del uid autenticado, si viene el campo authUid DEBE coincidir con auth.uid,
+        // y deben venir los CAMPOS CRITICOS (tipo, objetivo, latitud, longitud,
+        // fechaHoraDispositivo). Asi un vigilador no puede crear por REST una fichada
+        // incompleta ni a nombre de otro. El admin queda exento (corrige a cualquiera).
+        ".validate": "newData.child('legajo').isString() && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || (newData.hasChildren(['tipo','objetivo','latitud','longitud','fechaHoraDispositivo']) && newData.child('legajo').val() === root.child('usuarios').child(auth.uid).child('legajo').val() && (!newData.hasChild('authUid') || newData.child('authUid').val() === auth.uid)))"
+      }
+    },
+    // --- Nodos SIN cambios respecto de tus reglas actuales ---
+    // [8] fichadasPendientes: ENDURECIDO. Ya nadie del cliente lo escribe (el modo
+    //      offline usa localStorage y sincroniza a /fichadas). Se cierra igual que
+    //      /fichadas: crear solo el DUENO (legajo + authUid propios) o ADMIN;
+    //      modificar (p.ej. limpieza de PIN) SOLO ADMIN.
+    "fichadasPendientes": {
+      ".indexOn": ["legajo", "estadoServidor"],
+      ".read": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor' || (query.orderByChild === 'legajo' && query.equalTo === root.child('usuarios').child(auth.uid).child('legajo').val()))",
+      "$id": {
+        // [SA-ONLY] Ni el vigilador escribe fichadasPendientes por REST. El modo
+        // offline usa localStorage y sincroniza via Worker (SA). Solo ADMIN o SA.
+        ".write": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() === 'admin'",
+        ".validate": "newData.hasChildren(['legajo','authUid','tipo','objetivo','latitud','longitud','fechaHoraDispositivo']) && newData.child('legajo').isString()"
+      }
+    },
+    // [7b] alertas* ENDURECIDO: leer = ADMIN/SUPERVISOR. Escribir:
+    //   - ADMIN/SUPERVISOR: crean y modifican (el panel del supervisor genera y
+    //     archiva alertas de cualquier legajo; el admin registra bajas).
+    //   - Vigilador: SOLO puede CREAR una alerta cuyo legajo sea el suyo
+    //     (p.ej. su propia fichada bloqueada), y NO puede modificar las existentes.
+    //   - Si la alerta trae authUid, DEBE ser el del que escribe (no forjable).
+    //   Cierra: \"cualquier autenticado escribe/pisa alertas de otro\".
+    "alertasFichadas": {
+      ".read": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor')",
+      "$id": {
+        ".write": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor' || (!data.exists() && newData.child('legajo').val() === root.child('usuarios').child(auth.uid).child('legajo').val()))",
+        ".validate": "newData.hasChild('legajo') && (!newData.hasChild('authUid') || newData.child('authUid').val() === auth.uid)"
+      }
+    },
+    "alertasFichadasPendientes": {
+      ".read": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor')",
+      "$id": {
+        ".write": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor' || (!data.exists() && newData.child('legajo').val() === root.child('usuarios').child(auth.uid).child('legajo').val()))",
+        ".validate": "newData.hasChildren(['legajo','authUid','tipoAlerta','fechaHora']) && (newData.child('authUid').val() === auth.uid || root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor')"
+      }
+    },
+    "alertasLlegadasTarde": {
+      ".read": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor')",
+      "$id": {
+        ".write": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor' || (!data.exists() && newData.child('legajo').val() === root.child('usuarios').child(auth.uid).child('legajo').val()))",
+        ".validate": "newData.hasChild('legajo') && (!newData.hasChild('authUid') || newData.child('authUid').val() === auth.uid)"
+      }
+    },
+    "alertasSalidasAnticipadas": {
+      ".read": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor')",
+      "$id": {
+        ".write": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor' || (!data.exists() && newData.child('legajo').val() === root.child('usuarios').child(auth.uid).child('legajo').val()))",
+        ".validate": "newData.hasChild('legajo') && (!newData.hasChild('authUid') || newData.child('authUid').val() === auth.uid)"
+      }
+    },
+    "alertasFichadasEliminadas": {
+      ".read": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor')",
+      "$id": {
+        ".write": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor' || (!data.exists() && newData.child('legajo').val() === root.child('usuarios').child(auth.uid).child('legajo').val()))",
+        ".validate": "newData.hasChild('legajo') && (!newData.hasChild('authUid') || newData.child('authUid').val() === auth.uid)"
+      }
+    },
+    "panicos": {
+      ".read": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor')",
+      "$id": {
+        // ENDURECIDO (hallazgo auditoria): crear un panico = cualquier autenticado
+        // (boton de panico del vigilador), PERO el legajo del panico DEBE ser el
+        // del uid autenticado (root/usuarios/<uid>/legajo). Antes un autenticado
+        // podia crear un panico a nombre de OTRO legajo (p.ej. legajo 0286 con la
+        // sesion del 0450); ahora las Reglas lo RECHAZAN server-side, no
+        // manipulable desde el cliente. MODIFICAR un panico ya existente (marcar
+        // ATENDIDO / ANULAR) sigue reservado SOLO a ADMIN, habilitando la anulacion
+        // logica (PATCH) sin abrir agujeros. El boton de panico del HTML ya envia
+        // legajo:String(<legajo de la sesion>), asi que este cambio NO rompe el flujo.
+        ".write": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || (!data.exists() && newData.child('legajo').val() === root.child('usuarios').child(auth.uid).child('legajo').val()))",
+        // Al CREAR, legajo obligatorio y STRING; si el payload trae authUid, DEBE
+        // coincidir con auth.uid (no forjable). El admin queda exento del match de
+        // legajo por el .write de arriba, pero igual respeta el tipo del legajo.
+        ".validate": "newData.hasChild('legajo') && newData.child('legajo').isString() && (!newData.hasChild('authUid') || newData.child('authUid').val() === auth.uid)"
+      }
+    },
+    "novedades": {
+      ".indexOn": ["legajo", "fechaHora"],
+      ".read": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor')",
+      // ENDURECIDO: crear novedad = ADMIN/SUPERVISOR o el DUENO (legajo propio).
+      // Modificar una novedad existente = solo ADMIN/SUPERVISOR. Antes cualquier
+      // autenticado podia crear/pisar novedades de otro legajo.
+      "$id": {
+        ".write": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor' || (!data.exists() && newData.child('legajo').val() === root.child('usuarios').child(auth.uid).child('legajo').val()))",
+        ".validate": "newData.hasChild('legajo') && newData.child('legajo').isString()"
+      }
+    },
+    // [12] rondasRegistros (PASO 2: Rondas con QR). Mismo patron ENDURECIDO que
+    //      'novedades': el vigilador SOLO crea su propio registro (legajo propio),
+    //      es APPEND-ONLY (no puede pisar/editar uno ya escrito) y, si trae
+    //      authUid, DEBE coincidir con auth.uid (no forjable). ADMIN/SUPERVISOR
+    //      leen todo y pueden crear/corregir. El vigilador NO lee el nodo
+    //      completo (no es su rol): escribe su paso y ve solo lo de su sesion en
+    //      el cliente. Indexado por legajo/idObjetivo/timestamp para el reporte.
+    //      Campos minimos exigidos: legajo (STRING), idObjetivo, idPunto, timestamp.
+    //      [PLAN] CANDADO INFRANQUEABLE POR PLAN: toda escritura de rondas exige
+    //      que el plan contratado incluya la funcion 'rondas' (config/plan/
+    //      funciones/rondas === true) y que la cuenta NO este suspendida. Como
+    //      config/plan SOLO lo escribe el Worker con la service account (los
+    //      clientes no pueden tocarlo), la empresa NO puede auto-habilitarse
+    //      rondas: lo decide el dueno del servicio. Si el plan no incluye rondas
+    //      (o esta suspendido), Firebase RECHAZA la escritura aunque se intente
+    //      por REST directo (no manipulable desde el navegador).
+    "rondasRegistros": {
+      ".indexOn": ["legajo", "idObjetivo", "timestamp"],
+      ".read": "auth != null && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor')",
+      "$id": {
+        ".write": "auth != null && root.child('config/plan/funciones/rondas').val() === true && root.child('config/plan/estado').val() !== 'suspendido' && (root.child('usuarios').child(auth.uid).child('rol').val() === 'admin' || root.child('usuarios').child(auth.uid).child('rol').val() === 'supervisor' || (!data.exists() && newData.child('legajo').val() === root.child('usuarios').child(auth.uid).child('legajo').val()))",
+        ".validate": "newData.hasChildren(['legajo', 'idObjetivo', 'idPunto', 'timestamp']) && newData.child('legajo').isString() && (!newData.hasChild('authUid') || newData.child('authUid').val() === auth.uid)"
+      }
+    },
+    "auditoria": {
+      // Bitacora inmutable y AUTORITATIVA (SOLO SERVIDOR / service account).
+      // La escritura queda TOTALMENTE cerrada para cualquier cliente autenticado
+      // (incluido el admin): unicamente el Worker, que usa la service account y
+      // BYPASSEA estas reglas, puede crear entradas. Asi ni el panel ni un token
+      // admin robado pueden falsificar o alterar la auditoria.
+      // La LECTURA se mantiene restringida a admin (bitacora visible solo para admin).
+      ".read": "auth != null && root.child('usuarios').child(auth.uid).child('rol').val() === 'admin'",
+      ".write": false,
+      "$id": { ".write": false }
+    },
+    "credencialesWebAuthn": {
+      ".read": false,
+      ".write": false
+    },
+    "webAuthnChallenges": {
+      ".read": false,
+      ".write": false
+    }
+  }
+}

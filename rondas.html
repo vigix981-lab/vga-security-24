@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Blindaje CSP: mismos origenes que el resto de la app. jsQR va autohospedado ('self'). -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdnjs.cloudflare.com https://www.gstatic.com; style-src 'self' https://cdnjs.cloudflare.com; font-src 'self' data: https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.googleapis.com https://www.gstatic.com https://vga-security-24.micasa27822024.workers.dev; worker-src 'self' blob:; manifest-src 'self'">
+  <title>vga security 24 - Control operativo y asistencia - Rondas con QR</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="rondas.css?v=20261004a">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <!-- Lector de QR autohospedado (origen propio, sin CDN externo). -->
+  <script defer src="jsQR.min.js?v=20261004a"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- ENCABEZADO Y MENU CORPORATIVO -->
+  <header class="bg-slate-900 border-b border-slate-800 shadow-md mb-4">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
+
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-slate-800 border border-emerald-500/30 rounded-xl flex items-center justify-center overflow-hidden shadow-inner p-1">
+          <i class="fa-solid fa-shield-halved text-white text-lg"></i>
+        </div>
+        <div>
+          <span class="text-[10px] font-extrabold tracking-widest text-emerald-400 uppercase block">vga security 24 - Control operativo y asistencia</span>
+          <h1 class="text-lg font-bold text-white tracking-wide">Rondas con QR</h1>
+        </div>
+      </div>
+
+      <nav class="flex flex-wrap justify-center items-center gap-1 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700/60">
+                <a href="index.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-house text-emerald-400"></i>
+          <span>Inicio</span>
+        </a>
+<a href="fichadas.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-camera-retro text-emerald-400"></i>
+          <span>Fichadas</span>
+        </a>
+        <a href="rondas.html" data-plan-funcion="rondas" class="hidden px-3 py-1.5 text-xs font-medium text-white bg-slate-700 rounded-lg transition flex items-center space-x-1.5 shadow-sm">
+          <i class="fa-solid fa-route text-emerald-400"></i>
+          <span>Rondas</span>
+        </a>
+        <a href="admin.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-building-shield text-emerald-400"></i>
+          <span>Centro de Operaciones</span>
+        </a>
+        <a href="panel.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-chart-line text-emerald-400"></i>
+          <span>Control en Tiempo Real</span>
+        </a>
+        <a href="mis-horas.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-clock text-emerald-400"></i>
+          <span>Control de Mis Horas</span>
+        </a>
+      </nav>
+
+    </div>
+  </header>
+
+  <!-- ============ PANTALLA 1: LOGIN DEL VIGILADOR ============ -->
+  <main id="pantallaLoginRondas" class="flex-grow flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-6 space-y-5 text-center">
+      <div>
+        <div class="w-14 h-14 mx-auto mb-2 rounded-2xl bg-emerald-950 border border-emerald-500/30 flex items-center justify-center">
+          <i class="fa-solid fa-route text-emerald-400 text-xl"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-white tracking-wide">Rondas con QR</h1>
+        <p class="text-sm text-slate-400 mt-1">Logueate para registrar tus puntos de control</p>
+      </div>
+      <form id="formLoginRondas" class="space-y-4 text-left" autocomplete="off">
+        <div>
+          <label class="block text-xs uppercase text-slate-400 mb-1">N° Legajo</label>
+          <input type="text" id="loginLegajoRondas" inputmode="numeric" placeholder="Ingrese su legajo (ej: 0286)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500">
+        </div>
+        <div>
+          <label class="block text-xs uppercase text-slate-400 mb-1">PIN / Clave de Personal</label>
+          <input type="password" id="loginPinRondas" maxlength="6" placeholder="****" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500">
+        </div>
+        <button type="submit" id="btnIngresarRondas" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-3 rounded-xl transition">Ingresar</button>
+        <p id="loginStatusRondas" class="text-xs mt-1 text-center hidden"></p>
+      </form>
+    </div>
+  </main>
+
+  <!-- ============ PANTALLA 2: ESCANER DE RONDAS ============ -->
+  <main id="pantallaRondas" class="hidden flex-grow flex items-start justify-center p-4">
+    <div class="w-full max-w-2xl bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-6 space-y-5">
+
+      <!-- Cabecera de sesion -->
+      <div class="flex items-center justify-between gap-3 border-b border-slate-700/60 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-emerald-950 border border-emerald-500/30 flex items-center justify-center">
+            <i class="fa-solid fa-user-shield text-emerald-400"></i>
+          </div>
+          <div>
+            <p class="text-[10px] uppercase tracking-widest text-slate-400">Sesion activa</p>
+            <p id="lblSesionRondas" class="text-sm font-bold text-white">—</p>
+          </div>
+        </div>
+        <button type="button" id="btnCerrarSesionRondas" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-rose-700 text-slate-200 transition inline-flex items-center gap-1.5">
+          <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesion
+        </button>
+      </div>
+
+      <!-- Bloqueo por plan: visible solo si el plan no incluye Rondas. -->
+      <div id="bloqueoRondas" class="hidden bg-amber-950 border border-amber-500 rounded-xl p-5 text-center space-y-2">
+        <i class="fa-solid fa-lock text-amber-400 text-2xl"></i>
+        <p id="bloqueoRondasMsg" class="text-sm text-amber-200">Rondas no está disponible en tu plan actual.</p>
+      </div>
+
+      <!-- Contenido operativo del escaner: se oculta si el plan no incluye Rondas. -->
+      <div id="operativoRondas" class="space-y-5">
+
+      <!-- Instruccion -->
+      <div class="bg-slate-900/60 border border-slate-700 rounded-xl p-4">
+        <p class="text-sm text-slate-300"><i class="fa-solid fa-circle-info text-emerald-400 mr-1"></i> Apunta la camara al código QR del punto de control. El registro se guarda automáticamente al leerlo.</p>
+      </div>
+
+      <!-- Marco del escaner -->
+      <div class="vigix-ronda-scan">
+        <video id="videoRondas" playsinline muted></video>
+        <canvas id="canvasRondas" class="vigix-ronda-canvas"></canvas>
+        <div id="miraRondas" class="vigix-ronda-mira hidden">
+          <div class="vigix-ronda-linea"></div>
+        </div>
+      </div>
+
+      <!-- Estado del escaner -->
+      <p id="estadoRondas" class="vigix-ronda-estado text-sm text-center text-slate-400">La cámara está apagada.</p>
+
+      <!-- Controles de camara -->
+      <div class="grid grid-cols-2 gap-4">
+        <button type="button" id="btnIniciarEscaner" class="bg-emerald-600 hover:bg-emerald-500 font-bold py-3 rounded-xl transition inline-flex items-center justify-center gap-2">
+          <i class="fa-solid fa-camera"></i> Encender cámara
+        </button>
+        <button type="button" id="btnDetenerEscaner" class="bg-slate-700 hover:bg-slate-600 font-bold py-3 rounded-xl transition inline-flex items-center justify-center gap-2" disabled>
+          <i class="fa-solid fa-stop"></i> Apagar cámara
+        </button>
+      </div>
+
+      <!-- Resultado de la ultima lectura -->
+      <div id="resultadoRondas" class="hidden"></div>
+
+      <!-- Puntos registrados en esta sesion -->
+      <div class="border-t border-slate-700/60 pt-4">
+        <p class="text-xs uppercase tracking-widest text-slate-400 mb-2">Registrados en esta sesión</p>
+        <div id="listaRegistrosRondas">
+          <p id="listaVaciaRondas" class="text-sm text-slate-500">Aún no registraste ningún punto.</p>
+        </div>
+      </div>
+
+      </div><!-- /#operativoRondas -->
+
+    </div>
+  </main>
+
+  <!-- Logica (script clasico) y modulo de sesion Firebase (ESM) -->
+  <script src="rondas.app.js?v=20261004a"></script>
+  <script type="module" src="rondas.module.js?v=20261004a"></script>
+  <!-- Capa visual: oculta en la nav las funciones que el plan no incluye. -->
+  <script src="plan-nav.js?v=20261005a"></script>
+</body>
+</html>

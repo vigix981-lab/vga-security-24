@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Blindaje CSP: solo se permiten los orígenes que la app realmente usa. -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdn.jsdelivr.net https://www.gstatic.com; style-src 'self' https://cdnjs.cloudflare.com; font-src 'self' data: https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.googleapis.com https://www.gstatic.com https://nominatim.openstreetmap.org https://vga-security-24.micasa27822024.workers.dev; worker-src 'self' blob:; manifest-src 'self'">
+  <title>vga security 24 - Control operativo y asistencia</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <!-- LIBRERÍA FACE-API.JS COMPLETA Y ESTABLE -->
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js" integrity="sha384-gzn2n++arkvyhdNLmUf1s6F5NZ8iAbZ7FhIt+Zw7Jlf1n/vNTmZ3+cYr7S4ogyco" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- Indicador visual de sincronizacion (flotante, aparece solo al sincronizar) -->
+  <div id="indicadorSync" class="hidden" role="status" aria-live="polite"></div>
+
+  <!-- La animacion girarSync y .icono-girando se movieron a styles.css (hardening #11) -->
+
+
+  <!-- ENCABEZADO Y MENÚ CORPORATIVO -->
+  <header class="bg-slate-900 border-b border-slate-800 shadow-md mb-4">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
+
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-slate-800 border border-emerald-500/30 rounded-xl flex items-center justify-center overflow-hidden shadow-inner p-1">
+          <i class="fa-solid fa-shield-halved text-white text-lg"></i>
+        </div>
+        <div>
+          <span class="text-[10px] font-extrabold tracking-widest text-emerald-400 uppercase block">vga security 24</span>
+          <h1 class="text-lg font-bold text-white tracking-wide">Fichadas</h1>
+        </div>
+      </div>
+
+      <nav class="flex flex-wrap justify-center items-center gap-1 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700/60">
+                <a href="index.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-house text-emerald-400"></i>
+          <span>Inicio</span>
+        </a>
+<a href="fichadas.html" class="px-3 py-1.5 text-xs font-medium text-white bg-slate-700 rounded-lg transition flex items-center space-x-1.5 shadow-sm">
+          <i class="fa-solid fa-camera-retro text-emerald-400"></i>
+          <span>Fichadas</span>
+        </a>
+        <a href="rondas.html" data-plan-funcion="rondas" class="hidden px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-route text-emerald-400"></i>
+          <span>Rondas</span>
+        </a>
+        <a href="admin.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-building-shield text-emerald-400"></i>
+          <span>Centro de Operaciones</span>
+        </a>
+        <a href="panel.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-chart-line text-emerald-400"></i>
+          <span>Control en Tiempo Real</span>
+        </a>
+        <a href="mis-horas.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-clock text-emerald-400"></i>
+          <span>Control de Mis Horas</span>
+        </a>
+      </nav>
+
+    </div>
+  </header>
+
+  <!-- ============ PANTALLA 1: BIENVENIDA / LOGIN ============ -->
+  <main id="pantallaLogin" class="flex-grow flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-6 space-y-5 text-center">
+      <div>
+        <h1 class="text-2xl font-bold text-white tracking-wide">Control operativo y asistencia</h1>
+        <p class="text-sm text-slate-400 mt-1">Logueate para fichar</p>
+      </div>
+      <div class="flex justify-center">
+        <span id="estadoRed" class="text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-500/30">🟢 Online</span>
+      </div>
+      <form id="formLogin" class="space-y-4 text-left" autocomplete="off">
+        <div>
+          <label class="block text-xs uppercase text-slate-400 mb-1">N° Legajo</label>
+          <input type="text" id="loginLegajo" inputmode="numeric" placeholder="Ingrese su legajo (ej: 0286)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500">
+        </div>
+        <div>
+          <label class="block text-xs uppercase text-slate-400 mb-1">PIN / Clave de Personal</label>
+          <input type="password" id="loginPin" maxlength="6" placeholder="****" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500">
+        </div>
+        <button type="submit" id="btnIngresar" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-3 rounded-xl transition">Ingresar</button>
+        <p id="login-status" class="text-xs mt-1 text-center hidden"></p>
+      </form>
+      <div class="pt-2 border-t border-slate-700/60">
+        <button type="button" id="btnVincular" class="text-[11px] text-slate-400 hover:text-emerald-400 transition inline-flex items-center gap-1.5">
+          <i class="fa-solid fa-mobile-screen"></i> <span id="lblVincular">Vincular dispositivo para fichaje offline</span>
+        </button>
+        <p id="estadoVincular" class="text-[11px] mt-1"></p>
+        <p id="estadoOfflinePend" class="text-[11px] mt-1 hidden"></p>
+      </div>
+    </div>
+  </main>
+  <!-- ============ PANTALLA 2: PANEL DE FICHAJE ============ -->
+  <main id="panelFichaje" class="hidden flex-grow flex items-start justify-center p-4">
+    <div class="w-full max-w-2xl bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-6 space-y-5">
+
+      <!-- Cabecera de sesion -->
+      <div class="flex items-center justify-between gap-3 border-b border-slate-700/60 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-emerald-950 border border-emerald-500/30 flex items-center justify-center">
+            <i class="fa-solid fa-user-shield text-emerald-400"></i>
+          </div>
+          <div>
+            <p class="text-[10px] uppercase tracking-widest text-slate-400">Sesion activa</p>
+            <p id="lblSesionNombre" class="text-sm font-bold text-white">—</p>
+          </div>
+        </div>
+        <button type="button" id="btnCerrarSesionVig" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-rose-700 text-slate-200 transition inline-flex items-center gap-1.5">
+          <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesion
+        </button>
+      </div>
+
+      <!-- Datos del vigilador (solo lectura) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs uppercase text-slate-400 mb-1">N° Legajo</label>
+          <input type="text" id="legajo" readonly class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none">
+          <p id="legajo-status" class="text-xs mt-1 hidden"></p>
+          <span id="ultimo-estado-badge" class="hidden inline-block text-[11px] font-semibold px-2 py-0.5 rounded mt-1"></span>
+        </div>
+        <div>
+          <label class="block text-xs uppercase text-slate-400 mb-1">Nombre</label>
+          <input type="text" id="nombre" readonly class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none">
+        </div>
+      </div>
+
+      <!-- Objetivo / puesto asignado -->
+      <div>
+        <label class="block text-xs uppercase text-slate-400 mb-1">Objetivo / Puesto</label>
+        <select id="objetivo" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500">
+          <option value="">Seleccione su puesto asignado</option>
+        </select>
+        <p id="objetivo-status" class="text-xs mt-1 text-slate-400"></p>
+        <p id="turno-status" class="text-xs mt-1 hidden"></p>
+      </div>
+
+      <!-- Captura de foto -->
+      <div class="bg-slate-900/60 border border-slate-700 rounded-xl p-4 space-y-3">
+        <div class="relative w-full aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
+          <video id="webcam" autoplay playsinline muted class="w-full h-full object-cover"></video>
+          <img id="preview" alt="Foto capturada" class="hidden absolute inset-0 w-full h-full object-cover">
+        </div>
+        <canvas id="canvas" class="hidden"></canvas>
+        <div class="flex items-center justify-between gap-3">
+          <button type="button" id="btnCapturar" class="flex-1 bg-slate-700 hover:bg-slate-600 font-semibold py-2.5 rounded-lg transition inline-flex items-center justify-center gap-2">
+            <i class="fa-solid fa-camera"></i> Capturar foto
+          </button>
+        </div>
+        <p id="foto-status" class="text-xs text-center text-slate-400"></p>
+      </div>
+
+      <!-- Botones de fichaje -->
+      <div class="grid grid-cols-2 gap-4">
+        <button type="button" id="btnEntrada" class="bg-emerald-600 hover:bg-emerald-500 font-bold py-3 rounded-xl transition inline-flex items-center justify-center gap-2">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> ENTRADA
+        </button>
+        <button type="button" id="btnSalida" class="bg-rose-600 hover:bg-rose-500 font-bold py-3 rounded-xl transition inline-flex items-center justify-center gap-2">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i> SALIDA
+        </button>
+      </div>
+
+      <!-- Resultado de la operacion -->
+      <div id="resultado" class="hidden"></div>
+
+    </div>
+  </main>
+
+  <!-- Control de licencia de prueba (vencimiento). Debe cargar ANTES de la app. -->
+  <script src="licencia.js"></script>
+  <!-- Logica de la app (script clasico) y modulo de sesion Firebase (ESM) -->
+  <script src="index.app.js"></script>
+  <script type="module" src="index.module.js"></script>
+  <!-- Capa visual: oculta en la nav las funciones que el plan no incluye. -->
+  <script src="plan-nav.js?v=20261005a"></script>
+</body>
+</html>

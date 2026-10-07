@@ -1,0 +1,99 @@
+/* rondas.css — Estilos propios de la pantalla de Rondas con QR.
+   Autohospedado (origen propio) para cumplir la CSP cerrada:
+   nada de style="" en el HTML ni clases Tailwind sin hornear.
+   Solo clases .vigix-ronda-* y reglas estandar. */
+
+/* Marco del escaner: mantiene proporcion y recorta el video. */
+.vigix-ronda-scan {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+  aspect-ratio: 1 / 1;
+  background: #000;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+.vigix-ronda-scan video,
+.vigix-ronda-scan canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* El canvas de lectura queda oculto (solo se usa para analizar frames). */
+.vigix-ronda-canvas { visibility: hidden; }
+
+/* Mira / recuadro guia centrado. */
+.vigix-ronda-mira {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 64%;
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%);
+  border: 3px solid rgba(16, 185, 129, 0.9);
+  border-radius: 0.75rem;
+  box-shadow: 0 0 0 9999px rgba(2, 6, 23, 0.45);
+  pointer-events: none;
+}
+/* Linea de barrido animada dentro de la mira. */
+.vigix-ronda-linea {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  height: 2px;
+  top: 10%;
+  background: linear-gradient(90deg, transparent, rgba(16,185,129,0.95), transparent);
+  animation: vigixRondaScan 2.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes vigixRondaScan {
+  0%   { top: 12%; opacity: 0.3; }
+  50%  { top: 86%; opacity: 1; }
+  100% { top: 12%; opacity: 0.3; }
+}
+
+/* Reduce el movimiento si el usuario lo pidio en su sistema. */
+@media (prefers-reduced-motion: reduce) {
+  .vigix-ronda-linea { animation: none; }
+}
+
+/* Estado del escaner (texto bajo el marco). */
+.vigix-ronda-estado {
+  min-height: 1.25rem;
+}
+
+/* Lista de puntos registrados en la sesion. */
+.vigix-ronda-reg {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid rgb(51 65 85);
+  border-radius: 0.75rem;
+  background: rgb(15 23 42 / 0.6);
+}
+.vigix-ronda-reg + .vigix-ronda-reg { margin-top: 0.5rem; }
+.vigix-ronda-reg-ico {
+  flex: 0 0 auto;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.vigix-ronda-reg-ok  { background: rgb(6 78 59); color: rgb(52 211 153); }
+.vigix-ronda-reg-warn{ background: rgb(69 26 3); color: rgb(251 191 36); }
+.vigix-ronda-reg-txt { flex: 1 1 auto; min-width: 0; }
+.vigix-ronda-reg-nombre {
+  font-weight: 700;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vigix-ronda-reg-meta { font-size: 0.75rem; color: rgb(148 163 184); }

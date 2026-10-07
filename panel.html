@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Blindaje CSP: solo se permiten los orígenes que la app realmente usa. -->
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://cdnjs.cloudflare.com https://www.gstatic.com; style-src 'self' https://cdnjs.cloudflare.com; font-src 'self' data: https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.googleapis.com https://www.gstatic.com https://nominatim.openstreetmap.org https://vga-security-24.micasa27822024.workers.dev; worker-src 'self' blob:; manifest-src 'self'">
+  <title>vga security 24 - Control operativo y asistencia - Panel de Control & Métricas</title>
+  <link rel="stylesheet" href="panel.css">
+  <script fetchpriority="low" src="lazy-cdn.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer">
+  
+</head> 
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- ========================================== -->
+  <!-- ENCABEZADO Y MENÚ CORPORATIVO - DEMO       -->
+  <!-- ========================================== -->
+  <header class="bg-slate-900 border-b border-slate-800 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
+      
+      <!-- LOGO Y NOMBRE DE LA APLICACIÓN -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-slate-800 border border-emerald-500/30 rounded-xl flex items-center justify-center overflow-hidden shadow-inner p-1">
+          <i class="fa-solid fa-shield-halved text-emerald-400 text-xl"></i>
+        </div>
+        <div>
+          <span class="text-[10px] font-extrabold tracking-widest text-emerald-400 uppercase block">vga security 24 - Control operativo y asistencia</span>
+          <h1 class="text-lg font-bold text-white tracking-wide">Sistema de Control</h1>
+        </div>
+      </div>
+
+      <!-- MENÚ DE NAVEGACIÓN RÁPIDA (ENTRELAZADO) -->
+      <nav class="flex flex-wrap justify-center items-center gap-1 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700/60">
+                <a href="index.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-house text-emerald-400"></i>
+          <span>Inicio</span>
+        </a>
+<a href="fichadas.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-camera-retro text-emerald-400"></i>
+          <span>Fichadas</span>
+        </a>
+        <a href="rondas.html" data-plan-funcion="rondas" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-route text-emerald-400"></i>
+          <span>Rondas</span>
+        </a>
+        <a href="admin.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-building-shield text-emerald-400"></i>
+          <span>Centro de Operaciones</span>
+        </a>
+        <a href="panel.html" class="px-3 py-1.5 text-xs font-medium text-white bg-slate-700 rounded-lg transition flex items-center space-x-1.5 shadow-sm">
+          <i class="fa-solid fa-chart-line text-emerald-400"></i>
+          <span>Control en Tiempo Real</span>
+        </a>
+        <a href="mis-horas.html" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-clock text-emerald-400"></i>
+          <span>Control de Mis Horas</span>
+        </a>
+      </nav>
+
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- MODAL / PANTALLA DE ACCESO CON CONTRASEÑA  -->
+  <!-- ========================================== -->
+  <div id="pantallaLogin" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700 p-6 md:p-8 rounded-2xl max-w-md w-full shadow-2xl text-center space-y-6">
+      
+      <div class="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto text-2xl">
+        <i class="fa-solid fa-user-shield"></i>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-bold text-white">Acceso Supervisor</h2>
+        <p class="text-xs text-slate-400 mt-1">Ingresa tu correo y contraseña para acceder al panel de control</p>
+      </div>
+
+      <form id="formLoginSupervisor" class="space-y-4">
+        <div class="relative">
+          <i class="fa-solid fa-envelope absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+          <input type="text" inputmode="text" autocapitalize="none" autocorrect="off" spellcheck="false" id="inputEmail" placeholder="Legajo o correo (ej: 120000 o supervisor@vigix.com)" required autocomplete="username" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 text-center text-sm">
+        </div>
+        <div class="relative">
+          <i class="fa-solid fa-lock absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+          <input type="password" id="inputPass" placeholder="Contraseña de acceso" required autocomplete="current-password" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 text-center tracking-widest text-lg">
+        </div>
+
+        <p id="msgErrorPass" class="text-xs text-rose-400 hidden flex items-center justify-center gap-1">
+          <i class="fa-solid fa-circle-exclamation"></i> Contraseña incorrecta. Intenta nuevamente.
+        </p>
+
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2">
+          <i class="fa-solid fa-key"></i> Ingresar al Panel
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- CONTENIDO PRINCIPAL DEL DASHBOARD (OCULTO) -->
+  <!-- ========================================== -->
+  <div id="contenidoPanel" class="max-w-7xl mx-auto space-y-6 p-4 md:p-8 flex-grow hidden w-full">
+    
+    <!-- ENCABEZADO INTERNO -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+      <div>
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-chart-line text-emerald-500"></i> Panel de Control & Métricas 
+        </h2>
+        <p class="text-xs text-slate-400 mt-1">Supervisión, KPIs e historial de asistencia en tiempo real</p>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <button id="btnActualizar" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg">
+          <i class="fa-solid fa-rotate-right" id="icono-reload"></i> Actualizar
+        </button>
+        <button id="btnCerrarSesion" class="bg-slate-700 hover:bg-rose-600 text-slate-300 hover:text-white font-semibold px-3 py-2 rounded-xl text-sm transition border border-slate-600" title="Cerrar Sesión">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- SECCIÓN DE KPIS (TARJETAS INDICADORAS) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- KPI 1: PRESENTES HOY -->
+      <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-lg flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Entradas Hoy</p>
+          <h2 id="kpiEntradasHoy" class="text-2xl font-black text-emerald-400 mt-1">0</h2>
+        </div>
+        <div class="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 text-xl">
+          <i class="fa-solid fa-right-to-bracket"></i>
+        </div>
+      </div>
+
+      <!-- KPI 2: SALIDAS HOY -->
+      <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-lg flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Salidas Hoy</p>
+          <h2 id="kpiSalidasHoy" class="text-2xl font-black text-rose-400 mt-1">0</h2>
+        </div>
+        <div class="w-12 h-12 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center justify-center text-rose-400 text-xl">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </div>
+      </div>
+
+      <!-- KPI 3: EN PLANTA AHORA -->
+      <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-lg flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">En Planta Hoy</p>
+          <h2 id="kpiEnPlanta" class="text-2xl font-black text-sky-400 mt-1">0</h2>
+        </div>
+        <div class="w-12 h-12 bg-sky-500/10 border border-sky-500/20 rounded-xl flex items-center justify-center text-sky-400 text-xl">
+          <i class="fa-solid fa-user-check"></i>
+        </div>
+      </div>
+
+      <!-- KPI 4: TOTAL DE REGISTROS -->
+      <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-lg flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Filtrados</p>
+          <h2 id="kpiTotalRegistros" class="text-2xl font-black text-amber-400 mt-1">0</h2>
+        </div>
+        <div class="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center text-amber-400 text-xl">
+          <i class="fa-solid fa-database"></i>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SECCIÓN DE GRÁFICOS -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- GRÁFICO 1: ESTADO DEL DÍA (DONA) -->
+      <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-xl flex flex-col items-center justify-center">
+        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2 self-start">
+          <i class="fa-solid fa-chart-pie text-sky-400"></i> Estado del Personal (Hoy)
+        </h3>
+        <div class="w-full max-w-[240px] h-[220px] flex items-center justify-center">
+          <canvas id="chartDonaHoy"></canvas>
+        </div>
+      </div>
+
+      <!-- GRÁFICO 2: ACTIVIDAD DE LA ÚLTIMA SEMANA (BARRAS) -->
+      <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-xl lg:col-span-2">
+        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-chart-column text-emerald-400"></i> Marcaciones de los Últimos 7 Días
+        </h3>
+        <div class="w-full h-[220px]">
+          <canvas id="chartBarrasSemana"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MÓDULO: ALERTAS DE SUPERVISIÓN (llegadas tarde / salidas anticipadas) -->
+    <div id="seccionAlertasSupervision" class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-bell text-rose-400"></i> Alertas de Supervisión
+          <span id="contadorAlertasSup" class="hidden ml-1 text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 px-2 py-0.5 rounded-full">0</span>
+        </h3>
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer select-none">
+            <input type="checkbox" id="chkMostrarArchivadasSup" class="accent-emerald-500">
+            Ver archivadas
+          </label>
+          <button id="btnRefrescarAlertas" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+            <i class="fa-solid fa-rotate-right"></i> Refrescar
+          </button>
+        </div>
+      </div>
+      <p class="text-xs text-slate-400">Se listan las <strong>llegadas tarde</strong> y <strong>salidas anticipadas</strong> detectadas según el horario programado y las tolerancias configuradas. Podés archivarlas cuando ya fueron revisadas (queda guardado y no vuelve a aparecer al recargar).</p>
+      <div id="listaAlertasSupervision" class="space-y-2"></div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!--  MÓDULO: ALERTAS DE RONDAS (Opción A - vigilancia del lado del cliente)   -->
+    <!--  Detecta puntos de ronda que NO se marcaron a tiempo (según la
+          frecuencia + tolerancia configuradas por objetivo). Se evalúa en el
+          navegador mientras el panel está abierto (en cada polling de 30s).
+          SOLO LECTURA: no escribe en Firebase ni toca el Worker. -->
+    <!-- ===================================================================== -->
+    <div id="seccionAlertasRondas" data-plan-funcion="rondas" class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-route text-amber-400"></i> Rondas sin marcar a tiempo
+          <span id="contadorAlertasRondas" class="hidden ml-1 text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full">0</span>
+        </h3>
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer select-none">
+            <input type="checkbox" id="chkMostrarArchivadasRondas" class="accent-emerald-500">
+            Ver archivadas
+          </label>
+          <button id="btnRefrescarRondas" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+            <i class="fa-solid fa-rotate-right"></i> Refrescar
+          </button>
+        </div>
+      </div>
+      <p class="text-xs text-slate-400">Se listan los <strong>puntos de control</strong> cuyo plazo venció (según la frecuencia y tolerancia que cargaste por objetivo) y aún no fueron escaneados dentro de la ronda de hoy. Solo se evalúan los objetivos con rondas <strong>activas</strong> y dentro de su horario. Podés archivar un aviso cuando ya lo revisaste (queda guardado en este dispositivo y no vuelve a aparecer hoy).</p>
+      <div id="listaAlertasRondas" class="space-y-2"></div>
+    </div>
+
+    <!-- MÓDULO OPTIMIZADO: CONSULTA Y GESTIÓN DE HORAS POR VIGILADOR -->
+    <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-user-clock text-emerald-400"></i> Auditoría de Horas por Empleado
+        </h3>
+        
+        <!-- CONTROLES EXTRA (Filtros y Exportación) - Se muestran tras consultar -->
+        <div id="controlesSupervisor" class="hidden flex flex-wrap items-center gap-2">
+          <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5">
+            <span class="text-xs text-slate-400 font-semibold"><i class="fa-solid fa-calendar-days text-emerald-400"></i> Mes:</span>
+            <select id="supFiltroMes" class="bg-slate-900 text-xs text-white focus:outline-none">
+              <option value="todos">Todos</option>
+            </select>
+          </div>
+          <button id="btnExcelSupervisor" data-plan-funcion="exportarReportes" class="bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-file-excel"></i> Excel
+          </button>
+          <button id="btnPdfSupervisor" data-plan-funcion="exportarReportes" class="bg-rose-700 hover:bg-rose-600 text-white text-xs font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-file-pdf"></i> PDF
+          </button>
+        </div>
+      </div>
+      
+      <!-- BUSCADOR Y FILTROS DE FECHA ESPECÍFICA -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div class="relative md:col-span-1">
+          <i class="fa-solid fa-id-badge absolute left-3 top-3 text-slate-400 text-sm"></i>
+          <input type="text" id="legajoSupervisorInput" placeholder="N° de Legajo..." class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+        </div>
+        <div class="flex items-center gap-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5">
+          <span class="text-xs text-slate-400">Desde:</span>
+          <input type="date" id="supFechaDesde" class="bg-slate-900 text-xs text-white focus:outline-none w-full">
+        </div>
+        <div class="flex items-center gap-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5">
+          <span class="text-xs text-slate-400">Hasta:</span>
+          <input type="date" id="supFechaHasta" class="bg-slate-900 text-xs text-white focus:outline-none w-full">
+        </div>
+        <button id="btnConsultarHoras" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg">
+          <i class="fa-solid fa-magnifying-glass"></i> Consultar Horas
+        </button>
+      </div>
+
+      <!-- Resultado de la consulta -->
+      <div id="resultadoSupervisor" class="hidden space-y-4 pt-4 border-t border-slate-700">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 text-center border-l-4 border-l-amber-500">
+            <p class="text-xs text-slate-400 font-semibold">HORAS DIURNAS (06-21hs)</p>
+            <p id="supHorasDiurnas" class="text-xl font-bold text-amber-400 mt-1">00:00 hs</p>
+          </div>
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 text-center border-l-4 border-l-indigo-500">
+            <p class="text-xs text-slate-400 font-semibold">HORAS NOCTURNAS (21-06hs)</p>
+            <p id="supHorasNocturnas" class="text-xl font-bold text-indigo-400 mt-1">00:00 hs</p>
+          </div>
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 text-center border-l-4 border-l-emerald-500">
+            <p class="text-xs text-slate-400 font-semibold">TOTAL TRABAJADO</p>
+            <p id="supHorasTotales" class="text-xl font-bold text-emerald-400 mt-1">00:00 hs</p>
+          </div>
+        </div>
+
+        <!-- Tabla Detallada para el Supervisor -->
+        <div class="overflow-x-auto bg-slate-900 rounded-xl border border-slate-700">
+          <table class="w-full text-left text-sm text-slate-300">
+            <thead class="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-700">
+              <tr>
+                <th class="p-3">Entrada</th>
+                <th class="p-3">Salida</th>
+                <th class="p-3">Objetivo</th>
+                <th class="p-3 text-center">Diurnas</th>
+                <th class="p-3 text-center">Nocturnas</th>
+                <th class="p-3 text-center">Total</th>
+              </tr>
+            </thead>
+            <tbody id="supCuerpoDetalle" class="divide-y divide-slate-800"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTROS, BÚSQUEDA Y EXPORTACIÓN GENERAL -->
+    <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex flex-col lg:flex-row gap-4 justify-between items-center">
+      
+      <!-- Búsqueda por texto -->
+      <div class="flex-1 relative w-full">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
+        <input type="text" id="inputBusqueda" placeholder="Buscar por Nombre, Legajo u Objetivo..." class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+      </div>
+      
+      <!-- Controles de Fecha, Tipo y Exportación -->
+      <div class="flex flex-wrap md:flex-nowrap items-center gap-3 w-full lg:w-auto">
+        
+        <!-- Fecha Desde -->
+        <div class="flex items-center gap-1.5 w-full md:w-auto">
+          <span class="text-xs text-slate-400 font-semibold">Desde:</span>
+          <input type="date" id="fechaDesde" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 w-full md:w-auto">
+        </div>
+
+        <!-- Fecha Hasta -->
+        <div class="flex items-center gap-1.5 w-full md:w-auto">
+          <span class="text-xs text-slate-400 font-semibold">Hasta:</span>
+          <input type="date" id="fechaHasta" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 w-full md:w-auto">
+        </div>
+
+        <!-- Tipo de Marcación -->
+        <select id="filtroTipo" class="w-full md:w-auto bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+          <option value="TODOS">Todos los tipos</option>
+          <option value="ENTRADA">Solo Entradas</option>
+          <option value="SALIDA">Solo Salidas</option>
+        </select>
+
+        <!-- Mostrar fichadas anuladas (solo evidencia, no contabilizan) -->
+        <label class="flex items-center gap-2 text-xs text-slate-400 cursor-pointer select-none whitespace-nowrap">
+          <input type="checkbox" id="chkMostrarAnuladas" class="accent-rose-500">
+          <i class="fa-solid fa-ban text-rose-400"></i> Mostrar anuladas
+        </label>
+
+        <!-- Botones de Exportación -->
+        <div class="flex items-center gap-2 w-full md:w-auto">
+          <button id="btnExcelGeneral" data-plan-funcion="exportarReportes" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-md flex-1 md:flex-none">
+            <i class="fa-solid fa-file-excel"></i> Excel
+          </button>
+          <button id="btnPdfGeneral" data-plan-funcion="exportarReportes" class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-md flex-1 md:flex-none">
+            <i class="fa-solid fa-file-pdf"></i> PDF
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TABLA DE REGISTROS -->
+    <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden shadow-xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-700">
+            <tr>
+              <th class="p-4">Fecha y Hora</th>
+              <th class="p-4">Legajo</th>
+              <th class="p-4">Nombre</th>
+              <th class="p-4">Objetivo</th>
+              <th class="p-4 text-center">Tipo</th>
+              <th class="p-4 text-center">Cumplimiento</th>
+              <th class="p-4 text-center">Ubicación</th>
+              <th class="p-4 text-center">Foto</th>
+              <th class="p-4 text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="cuerpoTabla" class="divide-y divide-slate-700/50">
+            <tr>
+              <td colspan="9" class="p-8 text-center text-slate-400">
+                <i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-500 mb-2"></i>
+                <p>Cargando información desde Firebase...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL FOTO -->
+  <div id="modalFoto" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 max-w-lg w-full relative space-y-4">
+      <button id="btnCerrarModalFoto" class="absolute top-3 right-3 text-slate-400 hover:text-white text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <h3 class="font-bold text-white text-base">Foto de Marcación</h3>
+      <div class="w-full h-80 bg-slate-950 rounded-xl overflow-hidden flex items-center justify-center relative">
+        <img id="imgModal" src="" alt="Foto Fichada" class="w-full h-full object-contain">
+      </div>
+    </div>
+  </div>
+
+  <script src="licencia.js"></script>
+  <script src="panel.app.js?v=20261004a"></script>
+
+  <!-- ============================================================================= -->
+  <!--  LOGIN REAL SUPERVISOR - Firebase Auth (Web SDK v10 modular)                  -->
+  <!--  Bloque aditivo: no modifica ninguna lógica existente del panel.             -->
+  <!-- ============================================================================= -->
+  <script type="module" src="panel.module.js?v=20261004a"></script>
+</body>
+</html>
